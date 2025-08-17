@@ -21,8 +21,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // Schedule to run on the 1st day of each month at 00:00
-        $schedule->command('db:produk')->monthlyOn(1, '00:00');
-        // $schedule->command('db:produk')->everyMinute();
+        // $schedule->command('db:produk')->monthlyOn(1, '00:00');
+        $schedule->command('db:produk')->everyMinute();
 
     }
 

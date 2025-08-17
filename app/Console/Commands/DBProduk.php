@@ -15,119 +15,87 @@ class DBProduk extends Command
     public function handle()
     {
         $currentMonth = Carbon::now()->format('Y-m');
+        $previousMonth = Carbon::now()->subMonth()->format('Y-m');
 
-        // 🔁 First backup run - end of previous month
+        // First backup run - end of previous month
         $results = DB::table('produk')
-            ->leftJoin('pembelian_detail', 'produk.id_produk', '=', 'pembelian_detail.id_produk')
-            ->join(DB::raw('(
-                SELECT 
-                    DATE_FORMAT(created_at, "%Y-%m") as month,
-                    id_produk,
-                    COALESCE(SUM(jumlah), 0) as total_jumlah
-                FROM pembelian_detail
-                WHERE DATE_FORMAT(created_at, "%Y-%m") = "' . $currentMonth . '"
-                GROUP BY month, id_produk
-                UNION ALL
-                SELECT "' . $currentMonth . '" as month, id_produk, 0 as total_jumlah
-                FROM produk
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM pembelian_detail
-                    WHERE pembelian_detail.id_produk = produk.id_produk
-                    AND DATE_FORMAT(pembelian_detail.created_at, "%Y-%m") = "' . $currentMonth . '"
-                )
-            ) as monthly_totals'), function ($join) {
-                $join->on('produk.id_produk', '=', 'monthly_totals.id_produk');
-            })
             ->select(
                 'produk.id_produk',
                 'produk.id_kategori',
                 'produk.nama_produk',
                 'produk.satuan',
-                'produk.stok',
                 'produk.harga_beli',
-                'produk.stok_lama',
                 'produk.tanggal_expire',
-                'monthly_totals.month',
-                'monthly_totals.total_jumlah as total_jumlah'
+                'produk.stok_lama',
+                DB::raw("(SELECT COALESCE(SUM(jumlah), 0) FROM pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk AND DATE_FORMAT(pembelian_detail.created_at, '%Y-%m') = '$previousMonth') as total_jumlah_pembelian"),
+                DB::raw("(SELECT COALESCE(SUM(jumlah), 0) FROM penjualan_detail WHERE penjualan_detail.id_produk = produk.id_produk AND DATE_FORMAT(penjualan_detail.created_at, '%Y-%m') = '$previousMonth') as total_jumlah_penjualan")
             )
-            ->where('monthly_totals.month', '=', $currentMonth)
-            ->groupBy('produk.id_produk', 'monthly_totals.month')
             ->get();
 
-        foreach ($results as $result) {
-            BackupProduk::create([
-                'id_produk' => $result->id_produk,
-                'id_kategori' => $result->id_kategori,
-                'nama_produk' => $result->nama_produk,
-                'satuan' => $result->satuan,
-                'harga_beli' => $result->harga_beli,
-                'stok_awal' => $result->stok_lama,
-                'stok_akhir' => $result->stok,
-                'stok_belanja' => $result->total_jumlah,
-                'total_belanja' => $result->harga_beli * $result->total_jumlah,
-                'tanggal_expire' => $result->tanggal_expire,
-                'created_at' => Carbon::now()->startOfMonth()->subMonth()->endOfMonth(),
-                'updated_at' => Carbon::now()->startOfMonth()->subMonth()->endOfMonth(),
-            ]);
-        }
+        $results->map(function ($results) {
+            $stok_awal = $results->stok_lama ?? 0;
+            $stok_akhir = $stok_awal + $results->total_jumlah_pembelian - $results->total_jumlah_penjualan;
+            
+            $backup = new BackupProduk();
+            $backup->id_produk = $results->id_produk;
+            $backup->id_kategori = $results->id_kategori;
+            $backup->nama_produk = $results->nama_produk;
+            $backup->satuan = $results->satuan;
+            $backup->harga_beli = $results->harga_beli;
+            $backup->stok_awal = $stok_awal;
+            $backup->stok_akhir = $stok_akhir;
+            $backup->stok_belanja = $results->total_jumlah_pembelian;
+            $backup->total_belanja = $results->total_jumlah_pembelian;
+            $backup->tanggal_expire = $results->tanggal_expire;
+            $backup->created_at = Carbon::now()->startOfMonth()->subMonth()->endOfMonth();
+            $backup->updated_at = Carbon::now()->startOfMonth()->subMonth()->endOfMonth();
+            $backup->save();
+        });
 
-        // ✅ Update stok_lama after first backup
-        DB::table('produk')->update(['stok_lama' => DB::raw('stok')]);
+        // Update produk table with calculated stok values
+        $results->each(function ($result) {
+            $stok_akhir = ($result->stok_lama ?? 0) + $result->total_jumlah_pembelian - $result->total_jumlah_penjualan;
+            DB::table('produk')
+                ->where('id_produk', $result->id_produk)
+                ->update([
+                    'stok' => $stok_akhir,
+                    'stok_lama' => $stok_akhir
+                ]);
+        });
 
-        // 🔁 Second backup run - first day of current month
         $hasil = DB::table('produk')
-            ->leftJoin('pembelian_detail', 'produk.id_produk', '=', 'pembelian_detail.id_produk')
-            ->join(DB::raw('(
-                SELECT 
-                    DATE_FORMAT(created_at, "%Y-%m") as month,
-                    id_produk,
-                    COALESCE(SUM(jumlah), 0) as total_jumlah
-                FROM pembelian_detail
-                WHERE DATE_FORMAT(created_at, "%Y-%m") = "' . $currentMonth . '"
-                GROUP BY month, id_produk
-                UNION ALL
-                SELECT "' . $currentMonth . '" as month, id_produk, 0 as total_jumlah
-                FROM produk
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM pembelian_detail
-                    WHERE pembelian_detail.id_produk = produk.id_produk
-                    AND DATE_FORMAT(pembelian_detail.created_at, "%Y-%m") = "' . $currentMonth . '"
-                )
-            ) as monthly_totals'), function ($join) {
-                $join->on('produk.id_produk', '=', 'monthly_totals.id_produk');
-            })
             ->select(
                 'produk.id_produk',
                 'produk.id_kategori',
                 'produk.nama_produk',
                 'produk.satuan',
-                'produk.stok',
                 'produk.harga_beli',
-                'produk.stok_lama',
                 'produk.tanggal_expire',
-                'monthly_totals.month',
-                'monthly_totals.total_jumlah as total_jumlah'
+                'produk.stok_lama',
+                DB::raw("(SELECT COALESCE(SUM(jumlah), 0) FROM pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk AND DATE_FORMAT(pembelian_detail.created_at, '%Y-%m') = '$currentMonth') as total_jumlah_pembelian"),
+                DB::raw("(SELECT COALESCE(SUM(jumlah), 0) FROM penjualan_detail WHERE penjualan_detail.id_produk = produk.id_produk AND DATE_FORMAT(penjualan_detail.created_at, '%Y-%m') = '$currentMonth') as total_jumlah_penjualan")
             )
-            ->where('monthly_totals.month', '=', $currentMonth)
-            ->groupBy('produk.id_produk', 'monthly_totals.month')
             ->get();
 
-        foreach ($hasil as $result) {
-            BackupProduk::create([
-                'id_produk' => $result->id_produk,
-                'id_kategori' => $result->id_kategori,
-                'nama_produk' => $result->nama_produk,
-                'satuan' => $result->satuan,
-                'harga_beli' => $result->harga_beli,
-                'stok_awal' => $result->stok_lama,
-                'stok_akhir' => $result->stok,
-                'stok_belanja' => $result->total_jumlah,
-                'total_belanja' => $result->harga_beli * $result->total_jumlah,
-                'tanggal_expire' => $result->tanggal_expire,
-                'created_at' => Carbon::now()->startOfMonth(),
-                'updated_at' => Carbon::now()->startOfMonth(),
-            ]);
-        }
+        $hasil->map(function ($hasil) {
+            $stok_awal = $hasil->stok_lama ?? 0;
+            $stok_akhir = $stok_awal + $hasil->total_jumlah_pembelian - $hasil->total_jumlah_penjualan;
+            
+            $backup = new BackupProduk();
+            $backup->id_produk = $hasil->id_produk;
+            $backup->id_kategori = $hasil->id_kategori;
+            $backup->nama_produk = $hasil->nama_produk;
+            $backup->satuan = $hasil->satuan;
+            $backup->harga_beli = $hasil->harga_beli;
+            $backup->stok_awal = $stok_awal;
+            $backup->stok_akhir = $stok_akhir;
+            $backup->stok_belanja = $hasil->total_jumlah_pembelian;
+            $backup->total_belanja = $hasil->harga_beli * $hasil->total_jumlah_pembelian;
+            $backup->tanggal_expire = $hasil->tanggal_expire;
+            $backup->created_at = Carbon::now()->startOfMonth();
+            $backup->updated_at = Carbon::now()->startOfMonth();
+            $backup->save();
+        });
 
         $this->info("Backup created for both end-of-last-month and start-of-this-month for {$currentMonth}");
     }

@@ -38,7 +38,7 @@
                         <i class="fa fa-truck"></i> <span>Supplier</span>
                     </a>
                 </li>
-            @elseif (auth()->user()->level == 6)
+            @elseif (auth()->user()->level == 6 || auth()->user()->level == 8)
                 <li class="header">MASTER</li>
                 <li>
                     <a href="{{ route('produk.index') }}">
@@ -57,6 +57,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{{ route('transaksi.index') }}">
+                        <i class="fa fa-shopping-cart"></i> <span>Transaksi Aktif</span>
+                    </a>
+                </li>
+                <li>
                     <a href="{{ route('transaksi.baru') }}">
                         <i class="fa fa-cart-arrow-down"></i> <span>Transaksi Baru</span>
                     </a>
@@ -71,12 +76,22 @@
                 <li class="header">USP</li>
                 <li>
                     <a href="{{ route('simpanan.index') }}">
-                        <i class="fa fa-cubes"></i> <span>Simpanan</span>
+                        <i class="fa fa-bank"></i> <span>Simpanan</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('simpanan.create') }}">
-                        <i class="fa fa-cart-arrow-down"></i> <span>Transaksi Simpanan</span>
+                        <i class="fa fa-exchange"></i> <span>Transaksi Simpanan</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('pinjaman.index') }}">
+                        <i class="fa fa-credit-card"></i> <span>Pinjaman</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('pengambilan.index') }}">
+                        <i class="fa fa-hand-paper-o"></i> <span>Pengambilan</span>
                     </a>
                 </li>
             @else
@@ -85,6 +100,16 @@
                     <li>
                         <a href="{{ route('kategori.index') }}">
                             <i class="fa fa-cube"></i> <span>Kategori</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('simpanan.index') }}">
+                            <i class="fa fa-bank"></i> <span>Simpanan</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('simpanan.create') }}">
+                            <i class="fa fa-exchange"></i> <span>Transaksi Simpanan</span>
                         </a>
                     </li>
                 @endif
@@ -112,7 +137,7 @@
                 @if (auth()->user()->level == 4 || auth()->user()->level == 1)
                     <li>
                         <a href="{{ route('jasa.index') }}">
-                            <i class="fa fa-money"></i> <span>Jasa</span>
+                            <i class="fa fa-handshake-o"></i> <span>Jasa</span>
                         </a>
                     </li>
                 @endif
@@ -126,11 +151,11 @@
                         <i class="fa fa-upload"></i> <span>Penjualan</span>
                     </a>
                 </li>
-                {{-- <li>
-            <a href="{{ route('transaksi.index') }}">
-                <i class="fa fa-cart-arrow-down"></i> <span>Transaksi Aktif</span>
-            </a>
-        </li> --}}
+                <li>
+                    <a href="{{ route('transaksi.index') }}">
+                        <i class="fa fa-shopping-cart"></i> <span>Transaksi Aktif</span>
+                    </a>
+                </li>
                 <li>
                     <a href="{{ route('transaksi.baru') }}">
                         <i class="fa fa-cart-arrow-down"></i> <span>Transaksi Baru</span>

@@ -17,12 +17,12 @@ class PembelianDetailController extends Controller
         $id_pembelian = session('id_pembelian');
         if (auth()->user()->level == 4) {
             $produk = Produk::orderBy('nama_produk')->where('id_kategori', 4)->get();
-        } elseif (auth()->user()->level == 5) {
+        } elseif (auth()->user()->level == 5 || auth()->user()->level == 8) {
             $produk = Produk::orderBy('nama_produk')->where('id_kategori', 5)->get();
-        } elseif (auth()->user()->level == 8) {
-            $produk = Produk::orderBy('nama_produk')->where('id_kategori', 13)->get();
-        } else {
+        } elseif (auth()->user()->level == 1) {
             $produk = Produk::orderBy('nama_produk')->get();
+        } else {
+            $produk = Produk::orderBy('nama_produk')->where([['id_kategori', '!=', 4], ['id_kategori', '!=', 5]])->get();
         }
 
         $supplier = Supplier::find(session('id_supplier'));

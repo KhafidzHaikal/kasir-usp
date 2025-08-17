@@ -73,10 +73,10 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <th width="5%">No</th>
-                <th width="10%">Tanggal</th>
+               <th width="5%">No</th>
                 <th>Nama Barang</th>
-                <th width="7%">Stok Awal</th>
+                <th width="7%">Kode Barang</th>
+                <th width="10%">Stok Awal</th>
                 <th width="7%">Pembelian</th>
                 <th width="7%">Penjualan</th>
                 <th width="10%">Stok Sekarang</th>
@@ -84,13 +84,14 @@
                 <th width="10%">Total</th>
             </tr>
         </thead>
-        <tbody>
+         <tbody>
             @foreach ($produk as $row)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
-                    <td>{{ tanggal_indonesia($row->created_at, false) }}</td>
+                    <!--<td>{{ tanggal_indonesia($row->created_at, false) }}</td>-->
                     <td style="text-align: left">{{ $row->nama_produk }}</td>
-                    <td>{{ $row->stok_lama }}</td>
+                    <td style="text-align: left">{{ $row->kode_produk }}</td>
+                    <td>{{ $row->backup_stok_awal }}</td>
                     <td>
                         @if (is_null($row->id_pembelian_detail))
                             0
@@ -105,9 +106,9 @@
                             {{ $row->total_jumlah }}
                         @endif
                     </td>
-                    <td>{{ $row->stok_lama + $row->total_jumlah_pembelian - $row->total_jumlah }}</td>
+                    <td>{{ $row->backup_stok_awal + $row->total_jumlah_pembelian - $row->total_jumlah }}</td>
                     <td style="text-align: right">{{ format_uang($row->harga_beli) }}</td>
-                    <td style="text-align: right">{{ format_uang($row->harga_beli * ($row->stok_lama + $row->total_jumlah_pembelian - $row->total_jumlah)) }}</td>
+                    <td style="text-align: right">{{ format_uang($row->harga_beli * ($row->backup_stok_awal + $row->total_jumlah_pembelian - $row->total_jumlah)) }}</td>
                 </tr>
             @endforeach
             <tr>

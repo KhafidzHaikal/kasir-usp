@@ -20,10 +20,8 @@ class DashboardController extends Controller
 
         if (auth()->user()->level == 4) {
             $produk = Produk::where('id_kategori', 4)->count();
-        } elseif (auth()->user()->level == 5) {
+        } elseif (auth()->user()->level == 5 || auth()->user()->level == 8) {
             $produk = Produk::where('id_kategori', 5)->count();
-        } elseif (auth()->user()->level == 8) {
-            $produk = Produk::where('id_kategori', 13)->count();
         } elseif (auth()->user()->level == 1) {
             $produk = Produk::count();
 
@@ -67,7 +65,7 @@ class DashboardController extends Controller
             $tanggal_awal = date('Y-m-d', strtotime("+1 day", strtotime($tanggal_awal)));
         }
 
-        if (auth()->user()->level == 6) {
+        if (auth()->user()->level == 6 || auth()->user()->level == 8) {
             return view('kasir.dashboard');
         } else {
             return view('admin.dashboard', compact('kategori', 'produk', 'supplier', 'member', 'tanggal_awal', 'tanggal_akhir', 'data_tanggal', 'data_pendapatan'));

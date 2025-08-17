@@ -39,6 +39,7 @@ class KasirController extends Controller
             $penjualan = Penjualan::with('member')
                 ->join('users', 'penjualan.id_user', '=', 'users.id')
                 ->where('users.level', 5)
+                ->orWhere('users.level', 8)
                 ->orderBy('penjualan.id_penjualan', 'desc')
                 ->get();
         } elseif (auth()->user()->level == 8) {
@@ -166,6 +167,7 @@ class KasirController extends Controller
             //     ->get();
             $penjualan = Penjualan::join('users', 'penjualan.id_user', '=', 'users.id')
                 ->where('users.level', 5)
+                ->orWhere('users.level', 8)
                 ->whereBetween('created_at', [$awal, $akhir])
                 ->get();
         } elseif (auth()->user()->level == 8) {

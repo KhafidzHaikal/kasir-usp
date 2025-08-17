@@ -23,21 +23,22 @@
                         <div class="col-lg-6">
                             <select name="level" id="level" class="form-control" required>
                                 <option value="">Pilih Tipe</option>
-                                @if (auth()->user()->level == 4)
+                                 @if (auth()->user()->level == 4)
                                     <option value="4">Bengkel</option>
                                 @elseif (auth()->user()->level == 5)
-                                    <option value="5">Fotocopy</option>
-                                @elseif (auth()->user()->level == 8)
-                                    <option value="8">Fotocopy Dinas</option>
+                                    <option value="5">Fotocopy Admin</option>
+                                    <option value="8">Kasir Fotocopy</option>
                                 @elseif (auth()->user()->level == 1)
                                     <option value="1">Admin</option>
-                                    <option value="2">Kasir</option>
+                                    <option value="2">Waserda Admin</option>
+                                    <option value="6">Kasir</option>
                                     <option value="3">Gudang</option>
                                     <option value="4">Bengkel</option>
-                                    <option value="5">Fotocopy</option>
-                                    <option value="8">Fotocopy Dinas</option>
+                                    <option value="5">Fotocopy Admin</option>
+                                    <option value="8">Kasir Fotocopy</option>
                                 @else
-                                    <option value="2">Kasir</option>
+                                    <option value="2">Waserda Admin</option>
+                                    <option value="6">Kasir</option>
                                     <option value="3">Gudang</option>
                                 @endif
                             </select>

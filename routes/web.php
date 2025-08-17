@@ -44,12 +44,12 @@ Route::group(['middleware' => 'auth'], function () {
     // 2 Waserda
     // 3 Gudang
     // 4 Bengkel
-    // 5 Fotocopy
+    // 5 Fotocopy Admin
     // 6 Kasir
     // 7 SHU
-    // 8 FC Dinas
+    // 8 Kasir Fotocopy
 
-    Route::group(['middleware' => 'level:1,2,4,5,6, 8'], function () {
+    Route::group(['middleware' => 'level:1,2,4,5,6,8'], function () {
         Route::get('/member/data', [MemberController::class, 'data'])->name('member.data');
         Route::post('/member/cetak-member', [MemberController::class, 'cetakMember'])->name('member.cetak_member');
         Route::resource('/member', MemberController::class);
@@ -77,7 +77,7 @@ Route::group(['middleware' => 'auth'], function () {
         Route::resource('/kategori', KategoriController::class);
     });
 
-    Route::group(['middleware' => 'level:1,2,3,4,5,8'], function () {
+    Route::group(['middleware' => 'level:1,2,3,4,5'], function () {
         Route::get('/pembelian/data', [PembelianController::class, 'data'])->name('pembelian.data');
 
         Route::get('/pembelian/selesai', [PembelianController::class, 'selesai'])->name('pembelian.selesai');
@@ -130,7 +130,7 @@ Route::group(['middleware' => 'auth'], function () {
         Route::get('/transaksi/search', [PenjualanDetailController::class, 'search'])->name('search');
     });
 
-    Route::group(['middleware' => 'level:1,2,4,5,7,8'], function () {
+    Route::group(['middleware' => 'level:1,2,4,5,7'], function () {
         Route::get('/user/data', [UserController::class, 'data'])->name('user.data');
         Route::resource('/user', UserController::class);
     });

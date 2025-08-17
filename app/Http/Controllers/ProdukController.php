@@ -24,10 +24,8 @@ class ProdukController extends Controller
     {
         if (auth()->user()->level == 4) {
             $kategori = Kategori::where('id_kategori', 4)->pluck('nama_kategori', 'id_kategori');
-        } elseif (auth()->user()->level == 5) {
+        } elseif (auth()->user()->level == 5 || auth()->user()->level == 8) {
             $kategori = Kategori::where('id_kategori', 5)->pluck('nama_kategori', 'id_kategori');
-        } elseif (auth()->user()->level == 8) {
-            $kategori = Kategori::where('id_kategori', 13)->pluck('nama_kategori', 'id_kategori');
         } elseif (auth()->user()->level == 1) {
             $kategori = Kategori::all()->pluck('nama_kategori', 'id_kategori');
         } else {
@@ -38,34 +36,28 @@ class ProdukController extends Controller
 
         // Data disabled jika sudah backup tiap bulan
         $now = Carbon::now();
-        if(auth()->user()->level == 4) {
+        if (auth()->user()->level == 4) {
             $backups = DB::table('backup_produks')
-            ->join('produk', 'backup_produks.id_produk', '=', 'produk.id_produk')
-            ->where('backup_produks.id_kategori', 4)
-            ->select('backup_produks.created_at')
-            ->get();
-        } elseif (auth()->user()->level == 5) {
+                ->join('produk', 'backup_produks.id_produk', '=', 'produk.id_produk')
+                ->where('backup_produks.id_kategori', 4)
+                ->select('backup_produks.created_at')
+                ->get();
+        } elseif (auth()->user()->level == 5 || auth()->user()->level == 8) {
             $backups = DB::table('backup_produks')
-            ->join('produk', 'backup_produks.id_produk', '=', 'produk.id_produk')
-            ->where('backup_produks.id_kategori', 5)
-            ->select('backup_produks.created_at')
-            ->get();
-        } elseif (auth()->user()->level == 8) {
-            $backups = DB::table('backup_produks')
-            ->join('produk', 'backup_produks.id_produk', '=', 'produk.id_produk')
-            ->where('backup_produks.id_kategori', 13)
-            ->select('backup_produks.created_at')
-            ->get();
+                ->join('produk', 'backup_produks.id_produk', '=', 'produk.id_produk')
+                ->where('backup_produks.id_kategori', 5)
+                ->select('backup_produks.created_at')
+                ->get();
         } elseif (auth()->user()->level == 1) {
             $backups = DB::table('backup_produks')
-            ->select('created_at')
-            ->get();
+                ->select('created_at')
+                ->get();
         } else {
             $backups = DB::table('backup_produks')
-            ->join('produk', 'backup_produks.id_produk', '=', 'produk.id_produk')
-            ->where([['backup_produks.id_kategori', '!=', 4], ['backup_produks.id_kategori', '!=', 5]])
-            ->select('backup_produks.created_at')
-            ->get();
+                ->join('produk', 'backup_produks.id_produk', '=', 'produk.id_produk')
+                ->where([['backup_produks.id_kategori', '!=', 4], ['backup_produks.id_kategori', '!=', 5]])
+                ->select('backup_produks.created_at')
+                ->get();
         }
 
         foreach ($backups as $backup) {
@@ -88,20 +80,12 @@ class ProdukController extends Controller
             $stok_kosong = Produk::where([['stok', '<=', 0], ['id_kategori', 4]])
                 ->whereNotNull('stok')
                 ->get();
-        } elseif (auth()->user()->level == 5) {
+        } elseif (auth()->user()->level == 5 || auth()->user()->level == 8) {
             $stok = Produk::where('id_kategori', 5)
                 ->whereBetween('stok', [1, 2])
                 ->whereNotNull('stok')
                 ->get();
             $stok_kosong = Produk::where([['stok', '<=', 0], ['id_kategori', 5]])
-                ->whereNotNull('stok')
-                ->get();
-        } elseif (auth()->user()->level == 8) {
-            $stok = Produk::where('id_kategori', 13)
-                ->whereBetween('stok', [1, 2])
-                ->whereNotNull('stok')
-                ->get();
-            $stok_kosong = Produk::where([['stok', '<=', 0], ['id_kategori', 13]])
                 ->whereNotNull('stok')
                 ->get();
         } elseif (auth()->user()->level == 1) {
@@ -139,10 +123,8 @@ class ProdukController extends Controller
     {
         if (auth()->user()->level == 4) {
             $produk = DB::table('produk')->where('id_kategori', 4)->latest();
-        } elseif (auth()->user()->level == 5) {
+        } elseif (auth()->user()->level == 5 || auth()->user()->level == 8) {
             $produk = DB::table('produk')->where('id_kategori', 5)->latest();
-        } elseif (auth()->user()->level == 8) {
-            $produk = DB::table('produk')->where('id_kategori', 13)->latest();
         } elseif (auth()->user()->level == 1) {
             $produk = Produk::latest();
         } else {
@@ -261,13 +243,13 @@ class ProdukController extends Controller
     {
         $produk = Produk::find($id);
         $totalJumlah = DB::table('produk')->join('penjualan_detail', 'produk.id_produk', '=', 'penjualan_detail.id_produk')->where('produk.id_produk', '=', $id)->select(DB::raw("SUM(penjualan_detail.jumlah) as total_jumlah"))
-            ->value('total_jumlah');
-        $produks = Produk::all();
-        // foreach ()
-        // $request['kode_produk'] 
-        $request['stok_lama'] = $request['stok'];
-        $request['stok'] = ($request['stok_lama'] - $totalJumlah);
+        ->value('total_jumlah');
+        // $request['stok_lama'] = $request['stok'];
+        $request['stok'] = $request['stok'];
+        // $request['stok'] = ($request['stok_lama'] - $totalJumlah);
+        // $request->request->remove('updated_at');
 
+        // $produk->timestamps = false;
         $produk->update($request->all());
 
         return response(null, 204);
@@ -313,136 +295,301 @@ class ProdukController extends Controller
 
     public function pdf($awal, $akhir)
     {
+        // DB::table('produk')->update([
+        //         'created_at' => '2025-06-01 00:00:00',
+        //         'updated_at' => '2025-06-01 00:00:00',
+        //     ]);
         $akhir = Carbon::parse($akhir)->endOfDay();
         if (auth()->user()->level == 4) {
             // dd($produk);
-            $produk = Produk::leftJoin('pembelian_detail', 'pembelian_detail.id_produk', '=', 'produk.id_produk')
-                ->leftJoin('penjualan_detail', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
+            // $produk = Produk::leftJoin('pembelian_detail', 'pembelian_detail.id_produk', '=', 'produk.id_produk')
+            //     ->leftJoin('penjualan_detail', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
+            //     ->leftJoin('penjualan', 'penjualan_detail.id_penjualan', '=', 'penjualan.id_penjualan')
+            //     ->leftJoin('users', 'penjualan.id_user', '=', 'users.id')
+            //     ->leftJoin('backup_produks', 'produk.id_produk', '=', 'backup_produks.id_produk')
+            //     ->select(
+            //         'produk.id_produk',
+            //         'produk.id_kategori',
+            //         'produk.nama_produk',
+            //         'produk.created_at',
+            //         'produk.stok',
+            //         'produk.stok_lama',
+            //         'produk.harga_beli',
+            //         'pembelian_detail.id_pembelian_detail',
+            //         // DB::raw("(select stok_awal from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at >= '$awal' order by created_at asc limit 1) as stok_awal"),
+            //         'pembelian_detail.jumlah',
+            //         'penjualan_detail.id_penjualan_detail',
+            //         DB::raw("(SELECT SUM(pembelian_detail.jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk) as total_jumlah_pembelian"),
+            //         DB::raw("(SELECT SUM(penjualan_detail.jumlah) FROM penjualan_detail penjualan_detail WHERE penjualan_detail.id_produk = produk.id_produk) as total_jumlah"),
+            //         'users.name'
+            //     )
+            //     ->where('produk.id_kategori', 4)
+            //     ->whereBetween('produk.updated_at', [$awal, $akhir])
+            //     ->groupBy('produk.id_produk')
+            //     ->get();
+            $produk = Produk::leftJoin('pembelian_detail', function ($join) use ($awal, $akhir) {
+                $join->on('pembelian_detail.id_produk', '=', 'produk.id_produk')
+                    ->whereBetween('pembelian_detail.created_at', [$awal, $akhir]);
+            })
+                ->leftJoin('penjualan_detail', function ($join) use ($awal, $akhir) {
+                    $join->on('penjualan_detail.id_produk', '=', 'produk.id_produk')
+                        ->whereBetween('penjualan_detail.created_at', [$awal, $akhir]);
+                })
                 ->leftJoin('penjualan', 'penjualan_detail.id_penjualan', '=', 'penjualan.id_penjualan')
                 ->leftJoin('users', 'penjualan.id_user', '=', 'users.id')
-                ->leftJoin('backup_produks', 'produk.id_produk', '=', 'backup_produks.id_produk')
+                ->leftJoin(DB::raw("(
+                    SELECT bp1.*
+                    FROM backup_produks bp1
+                    INNER JOIN (
+                        SELECT id_produk, MIN(created_at) as min_created_at
+                        FROM backup_produks
+                        WHERE created_at BETWEEN '$awal' AND '$akhir'
+                        GROUP BY id_produk
+                    ) bp2 ON bp1.id_produk = bp2.id_produk AND bp1.created_at = bp2.min_created_at
+                ) as backup_produks"), 'produk.id_produk', '=', 'backup_produks.id_produk')
+
+                ->where(function ($query) use ($awal, $akhir) {
+                    $query->whereBetween('produk.created_at', [$awal, $akhir])
+                        ->orWhereBetween('produk.updated_at', [$awal, $akhir])
+                        ->orWhereBetween('backup_produks.created_at', [$awal, $akhir])
+                        ->orWhereBetween('backup_produks.updated_at', [$awal, $akhir]);
+                })
                 ->select(
                     'produk.id_produk',
                     'produk.id_kategori',
                     'produk.nama_produk',
+                    'backup_produks.stok_awal as backup_stok_awal',
+                    'produk.kode_produk',
                     'produk.created_at',
                     'produk.stok',
                     'produk.stok_lama',
                     'produk.harga_beli',
                     'pembelian_detail.id_pembelian_detail',
-                    // DB::raw("(select stok_awal from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at >= '$awal' order by created_at asc limit 1) as stok_awal"),
                     'pembelian_detail.jumlah',
                     'penjualan_detail.id_penjualan_detail',
-                    DB::raw("(SELECT SUM(pembelian_detail.jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk) as total_jumlah_pembelian"),
-                    DB::raw("(SELECT SUM(penjualan_detail.jumlah) FROM penjualan_detail penjualan_detail WHERE penjualan_detail.id_produk = produk.id_produk) as total_jumlah"),
+                    DB::raw("(SELECT SUM(pembelian_detail.jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk AND pembelian_detail.created_at BETWEEN '$awal' AND '$akhir') as total_jumlah_pembelian"),
+                    DB::raw("(SELECT SUM(penjualan_detail.jumlah) FROM penjualan_detail penjualan_detail WHERE penjualan_detail.id_produk = produk.id_produk AND penjualan_detail.created_at BETWEEN '$awal' AND '$akhir') as total_jumlah"),
                     'users.name'
                 )
                 ->where('produk.id_kategori', 4)
-                ->whereBetween('produk.updated_at', [$awal, $akhir])
                 ->groupBy('produk.id_produk')
                 ->get();
-        } elseif (auth()->user()->level == 5) {
-            $produk = Produk::leftJoin('pembelian_detail', 'pembelian_detail.id_produk', '=', 'produk.id_produk')
-                ->leftJoin('penjualan_detail', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
+        } elseif (auth()->user()->level == 5 || auth()->user()->level == 8) {
+            // $produk = Produk::leftJoin('pembelian_detail', 'pembelian_detail.id_produk', '=', 'produk.id_produk')
+            //     ->leftJoin('penjualan_detail', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
+            //     ->leftJoin('penjualan', 'penjualan_detail.id_penjualan', '=', 'penjualan.id_penjualan')
+            //     ->leftJoin('users', 'penjualan.id_user', '=', 'users.id')
+            //     ->leftJoin('backup_produks', 'produk.id_produk', '=', 'backup_produks.id_produk')
+            //     ->select(
+            //         'produk.id_produk',
+            //         'produk.id_kategori',
+            //         'produk.nama_produk',
+            //         'produk.created_at',
+            //         'produk.stok',
+            //         'produk.stok_lama',
+            //         'produk.harga_beli',
+            //         'pembelian_detail.id_pembelian_detail',
+            //         // DB::raw("(select stok_awal from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at >= '$awal' order by created_at asc limit 1) as stok_awal"),
+            //         'pembelian_detail.jumlah',
+            //         'penjualan_detail.id_penjualan_detail',
+            //         DB::raw("(SELECT SUM(pembelian_detail.jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk) as total_jumlah_pembelian"),
+            //         DB::raw("(SELECT SUM(penjualan_detail.jumlah) FROM penjualan_detail penjualan_detail WHERE penjualan_detail.id_produk = produk.id_produk) as total_jumlah"),
+            //         'users.name'
+            //     )
+            //     ->where('produk.id_kategori', 5)
+            //     ->whereBetween('produk.updated_at', [$awal, $akhir])
+            //     ->groupBy('produk.id_produk')
+            //     ->get();
+            $produk = Produk::leftJoin('pembelian_detail', function ($join) use ($awal, $akhir) {
+                $join->on('pembelian_detail.id_produk', '=', 'produk.id_produk')
+                    ->whereBetween('pembelian_detail.created_at', [$awal, $akhir]);
+            })
+                ->leftJoin('penjualan_detail', function ($join) use ($awal, $akhir) {
+                    $join->on('penjualan_detail.id_produk', '=', 'produk.id_produk')
+                        ->whereBetween('penjualan_detail.created_at', [$awal, $akhir]);
+                })
                 ->leftJoin('penjualan', 'penjualan_detail.id_penjualan', '=', 'penjualan.id_penjualan')
                 ->leftJoin('users', 'penjualan.id_user', '=', 'users.id')
-                ->leftJoin('backup_produks', 'produk.id_produk', '=', 'backup_produks.id_produk')
+                ->leftJoin(DB::raw("(
+                    SELECT bp1.*
+                    FROM backup_produks bp1
+                    INNER JOIN (
+                        SELECT id_produk, MIN(created_at) as min_created_at
+                        FROM backup_produks
+                        WHERE created_at BETWEEN '$awal' AND '$akhir'
+                        GROUP BY id_produk
+                    ) bp2 ON bp1.id_produk = bp2.id_produk AND bp1.created_at = bp2.min_created_at
+                ) as backup_produks"), 'produk.id_produk', '=', 'backup_produks.id_produk')
+
+                ->where(function ($query) use ($awal, $akhir) {
+                    $query->whereBetween('produk.created_at', [$awal, $akhir])
+                        ->orWhereBetween('produk.updated_at', [$awal, $akhir])
+                        ->orWhereBetween('backup_produks.created_at', [$awal, $akhir])
+                        ->orWhereBetween('backup_produks.updated_at', [$awal, $akhir]);
+                })
                 ->select(
                     'produk.id_produk',
                     'produk.id_kategori',
                     'produk.nama_produk',
+                    'backup_produks.stok_awal as backup_stok_awal',
+                    'produk.kode_produk',
                     'produk.created_at',
                     'produk.stok',
                     'produk.stok_lama',
                     'produk.harga_beli',
                     'pembelian_detail.id_pembelian_detail',
-                    // DB::raw("(select stok_awal from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at >= '$awal' order by created_at asc limit 1) as stok_awal"),
                     'pembelian_detail.jumlah',
                     'penjualan_detail.id_penjualan_detail',
-                    DB::raw("(SELECT SUM(pembelian_detail.jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk) as total_jumlah_pembelian"),
-                    DB::raw("(SELECT SUM(penjualan_detail.jumlah) FROM penjualan_detail penjualan_detail WHERE penjualan_detail.id_produk = produk.id_produk) as total_jumlah"),
+                    DB::raw("(SELECT SUM(pembelian_detail.jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk AND pembelian_detail.created_at BETWEEN '$awal' AND '$akhir') as total_jumlah_pembelian"),
+                    DB::raw("(SELECT SUM(penjualan_detail.jumlah) FROM penjualan_detail penjualan_detail WHERE penjualan_detail.id_produk = produk.id_produk AND penjualan_detail.created_at BETWEEN '$awal' AND '$akhir') as total_jumlah"),
                     'users.name'
                 )
                 ->where('produk.id_kategori', 5)
-                ->whereBetween('produk.updated_at', [$awal, $akhir])
-                ->groupBy('produk.id_produk')
-                ->get();
-        } elseif (auth()->user()->level == 8) {
-            $produk = Produk::leftJoin('pembelian_detail', 'pembelian_detail.id_produk', '=', 'produk.id_produk')
-                ->leftJoin('penjualan_detail', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
-                ->leftJoin('penjualan', 'penjualan_detail.id_penjualan', '=', 'penjualan.id_penjualan')
-                ->leftJoin('users', 'penjualan.id_user', '=', 'users.id')
-                ->leftJoin('backup_produks', 'produk.id_produk', '=', 'backup_produks.id_produk')
-                ->select(
-                    'produk.id_produk',
-                    'produk.id_kategori',
-                    'produk.nama_produk',
-                    'produk.created_at',
-                    'produk.stok',
-                    'produk.stok_lama',
-                    'produk.harga_beli',
-                    'pembelian_detail.id_pembelian_detail',
-                    // DB::raw("(select stok_awal from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at >= '$awal' order by created_at asc limit 1) as stok_awal"),
-                    'pembelian_detail.jumlah',
-                    'penjualan_detail.id_penjualan_detail',
-                    DB::raw("(SELECT SUM(pembelian_detail.jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk) as total_jumlah_pembelian"),
-                    DB::raw("(SELECT SUM(penjualan_detail.jumlah) FROM penjualan_detail penjualan_detail WHERE penjualan_detail.id_produk = produk.id_produk) as total_jumlah"),
-                    'users.name'
-                )
-                ->where('produk.id_kategori', 13)
-                ->whereBetween('produk.updated_at', [$awal, $akhir])
                 ->groupBy('produk.id_produk')
                 ->get();
         } elseif (auth()->user()->level == 1) {
-            $produk = Produk::where('id_kategori', 5)->update(['created_at' => now()]);
-            $produk = Produk::leftJoin('pembelian_detail', 'pembelian_detail.id_produk', '=', 'produk.id_produk')
-                ->leftJoin('penjualan_detail', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
+            // $produk = Produk::where('id_kategori', 5)->update(['created_at' => now()]);
+            // $produk = Produk::leftJoin('pembelian_detail', 'pembelian_detail.id_produk', '=', 'produk.id_produk')
+            //     ->leftJoin('penjualan_detail', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
+            //     ->leftJoin('penjualan', 'penjualan_detail.id_penjualan', '=', 'penjualan.id_penjualan')
+            //     ->leftJoin('users', 'penjualan.id_user', '=', 'users.id')
+            //     ->leftJoin('backup_produks', 'produk.id_produk', '=', 'backup_produks.id_produk')
+            //     ->select(
+            //         'produk.id_produk',
+            //         'produk.id_kategori',
+            //         'produk.nama_produk',
+            //         'produk.created_at',
+            //         'produk.stok',
+            //         'produk.stok_lama',
+            //         'produk.harga_beli',
+            //         'pembelian_detail.id_pembelian_detail',
+            //         // DB::raw("(select stok_awal from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at >= '$awal' order by created_at asc limit 1) as stok_awal"),
+            //         'pembelian_detail.jumlah',
+            //         'penjualan_detail.id_penjualan_detail',
+            //         DB::raw("(SELECT SUM(pembelian_detail.jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk) as total_jumlah_pembelian"),
+            //         DB::raw("(SELECT SUM(penjualan_detail.jumlah) FROM penjualan_detail penjualan_detail WHERE penjualan_detail.id_produk = produk.id_produk) as total_jumlah"),
+            //         'users.name'
+            //     )
+            //     ->whereBetween('produk.updated_at', [$awal, $akhir])
+            //     ->groupBy('produk.id_produk')
+            //     ->get();
+            $produk = Produk::leftJoin('pembelian_detail', function ($join) use ($awal, $akhir) {
+                $join->on('pembelian_detail.id_produk', '=', 'produk.id_produk')
+                    ->whereBetween('pembelian_detail.created_at', [$awal, $akhir]);
+            })
+                ->leftJoin('penjualan_detail', function ($join) use ($awal, $akhir) {
+                    $join->on('penjualan_detail.id_produk', '=', 'produk.id_produk')
+                        ->whereBetween('penjualan_detail.created_at', [$awal, $akhir]);
+                })
                 ->leftJoin('penjualan', 'penjualan_detail.id_penjualan', '=', 'penjualan.id_penjualan')
                 ->leftJoin('users', 'penjualan.id_user', '=', 'users.id')
-                ->leftJoin('backup_produks', 'produk.id_produk', '=', 'backup_produks.id_produk')
+                ->leftJoin(DB::raw("(
+                SELECT bp1.*
+                FROM backup_produks bp1
+                INNER JOIN (
+                    SELECT id_produk, MIN(created_at) as min_created_at
+                    FROM backup_produks
+                    WHERE created_at BETWEEN '$awal' AND '$akhir'
+                    GROUP BY id_produk
+                ) bp2 ON bp1.id_produk = bp2.id_produk AND bp1.created_at = bp2.min_created_at
+            ) as backup_produks"), 'produk.id_produk', '=', 'backup_produks.id_produk')
+
+                ->where(function ($query) use ($awal, $akhir) {
+                    $query->whereBetween('produk.created_at', [$awal, $akhir])
+                        ->orWhereBetween('produk.updated_at', [$awal, $akhir])
+                        ->orWhereBetween('backup_produks.created_at', [$awal, $akhir])
+                        ->orWhereBetween('backup_produks.updated_at', [$awal, $akhir]);
+                })
                 ->select(
                     'produk.id_produk',
                     'produk.id_kategori',
                     'produk.nama_produk',
+                    'backup_produks.stok_awal as backup_stok_awal',
+                    'produk.kode_produk',
                     'produk.created_at',
                     'produk.stok',
                     'produk.stok_lama',
                     'produk.harga_beli',
                     'pembelian_detail.id_pembelian_detail',
-                    // DB::raw("(select stok_awal from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at >= '$awal' order by created_at asc limit 1) as stok_awal"),
                     'pembelian_detail.jumlah',
                     'penjualan_detail.id_penjualan_detail',
-                    DB::raw("(SELECT SUM(pembelian_detail.jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk) as total_jumlah_pembelian"),
-                    DB::raw("(SELECT SUM(penjualan_detail.jumlah) FROM penjualan_detail penjualan_detail WHERE penjualan_detail.id_produk = produk.id_produk) as total_jumlah"),
+                    DB::raw("(SELECT SUM(pembelian_detail.jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk AND pembelian_detail.created_at BETWEEN '$awal' AND '$akhir') as total_jumlah_pembelian"),
+                    DB::raw("(SELECT SUM(penjualan_detail.jumlah) FROM penjualan_detail penjualan_detail WHERE penjualan_detail.id_produk = produk.id_produk AND penjualan_detail.created_at BETWEEN '$awal' AND '$akhir') as total_jumlah"),
                     'users.name'
                 )
-                ->whereBetween('produk.updated_at', [$awal, $akhir])
                 ->groupBy('produk.id_produk')
                 ->get();
         } else {
-            $produk = Produk::leftJoin('pembelian_detail', 'pembelian_detail.id_produk', '=', 'produk.id_produk')
-                ->leftJoin('penjualan_detail', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
+            // $produk = Produk::leftJoin('pembelian_detail', 'pembelian_detail.id_produk', '=', 'produk.id_produk')
+            //     ->leftJoin('penjualan_detail', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
+            //     ->leftJoin('penjualan', 'penjualan_detail.id_penjualan', '=', 'penjualan.id_penjualan')
+            //     ->leftJoin('users', 'penjualan.id_user', '=', 'users.id')
+            //     ->leftJoin('backup_produks', 'produk.id_produk', '=', 'backup_produks.id_produk')
+            //     ->select(
+            //         'produk.id_produk',
+            //         'produk.id_kategori',
+            //         'produk.nama_produk',
+            //         'produk.created_at',
+            //         'produk.stok',
+            //         'produk.stok_lama',
+            //         'produk.harga_beli',
+            //         'pembelian_detail.id_pembelian_detail',
+            //         // DB::raw("(select stok_awal from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at >= '$awal' order by created_at asc limit 1) as stok_awal"),
+            //         'pembelian_detail.jumlah',
+            //         'penjualan_detail.id_penjualan_detail',
+            //         DB::raw("(SELECT SUM(pembelian_detail.jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk) as total_jumlah_pembelian"),
+            //         DB::raw("(SELECT SUM(penjualan_detail.jumlah) FROM penjualan_detail penjualan_detail WHERE penjualan_detail.id_produk = produk.id_produk) as total_jumlah"),
+            //         'users.name'
+            //     )
+            //     ->where([['produk.id_kategori', '!=', 4], ['produk.id_kategori', '!=', 5]])
+            //     ->whereBetween('produk.updated_at', [$awal, $akhir])
+            //     ->groupBy('produk.id_produk')
+            //     ->get();
+            $produk = Produk::leftJoin('pembelian_detail', function ($join) use ($awal, $akhir) {
+                $join->on('pembelian_detail.id_produk', '=', 'produk.id_produk')
+                    ->whereBetween('pembelian_detail.created_at', [$awal, $akhir]);
+            })
+                ->leftJoin('penjualan_detail', function ($join) use ($awal, $akhir) {
+                    $join->on('penjualan_detail.id_produk', '=', 'produk.id_produk')
+                        ->whereBetween('penjualan_detail.created_at', [$awal, $akhir]);
+                })
                 ->leftJoin('penjualan', 'penjualan_detail.id_penjualan', '=', 'penjualan.id_penjualan')
                 ->leftJoin('users', 'penjualan.id_user', '=', 'users.id')
-                ->leftJoin('backup_produks', 'produk.id_produk', '=', 'backup_produks.id_produk')
+                ->leftJoin(DB::raw("(
+                    SELECT bp1.*
+                    FROM backup_produks bp1
+                    INNER JOIN (
+                        SELECT id_produk, MIN(created_at) as min_created_at
+                        FROM backup_produks
+                        WHERE created_at BETWEEN '$awal' AND '$akhir'
+                        GROUP BY id_produk
+                    ) bp2 ON bp1.id_produk = bp2.id_produk AND bp1.created_at = bp2.min_created_at
+                ) as backup_produks"), 'produk.id_produk', '=', 'backup_produks.id_produk')
+
+                ->where(function ($query) use ($awal, $akhir) {
+                    $query->whereBetween('produk.created_at', [$awal, $akhir])
+                        ->orWhereBetween('produk.updated_at', [$awal, $akhir])
+                        ->orWhereBetween('backup_produks.created_at', [$awal, $akhir])
+                        ->orWhereBetween('backup_produks.updated_at', [$awal, $akhir]);
+                })
                 ->select(
                     'produk.id_produk',
                     'produk.id_kategori',
                     'produk.nama_produk',
+                    'backup_produks.stok_awal as backup_stok_awal',
+                    'produk.kode_produk',
                     'produk.created_at',
                     'produk.stok',
                     'produk.stok_lama',
                     'produk.harga_beli',
                     'pembelian_detail.id_pembelian_detail',
-                    // DB::raw("(select stok_awal from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at >= '$awal' order by created_at asc limit 1) as stok_awal"),
                     'pembelian_detail.jumlah',
                     'penjualan_detail.id_penjualan_detail',
-                    DB::raw("(SELECT SUM(pembelian_detail.jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk) as total_jumlah_pembelian"),
-                    DB::raw("(SELECT SUM(penjualan_detail.jumlah) FROM penjualan_detail penjualan_detail WHERE penjualan_detail.id_produk = produk.id_produk) as total_jumlah"),
+                    DB::raw("(SELECT SUM(pembelian_detail.jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk AND pembelian_detail.created_at BETWEEN '$awal' AND '$akhir') as total_jumlah_pembelian"),
+                    DB::raw("(SELECT SUM(penjualan_detail.jumlah) FROM penjualan_detail penjualan_detail WHERE penjualan_detail.id_produk = produk.id_produk AND penjualan_detail.created_at BETWEEN '$awal' AND '$akhir') as total_jumlah"),
                     'users.name'
                 )
                 ->where([['produk.id_kategori', '!=', 4], ['produk.id_kategori', '!=', 5]])
-                ->whereBetween('produk.updated_at', [$awal, $akhir])
                 ->groupBy('produk.id_produk')
                 ->get();
         }
