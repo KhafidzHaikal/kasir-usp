@@ -26,13 +26,12 @@ class JasaController extends Controller
         if (auth()->user()->level == 4) {
             $jasa = Jasa::join('users', 'id_user', '=', 'users.id')
                 ->where('users.level', 4)
-                ->orWhere('users.level', 1)
                 ->select('jasas.*')
                 ->orderBy('id_jasa', 'desc')
                 ->get();
-        } elseif (auth()->user()->level == 5) {
+        } elseif (auth()->user()->level == 5 || auth()->user()->level == 8) {
             $jasa = Jasa::join('users', 'id_user', '=', 'users.id')
-                ->where('users.level', 5)
+                ->whereIn('users.level', [5, 8])
                 ->select('jasas.*')
                 ->orderBy('id_jasa', 'desc')
                 ->get();
@@ -81,11 +80,12 @@ class JasaController extends Controller
     public function store(Request $request)
     {
         $request['id_user'] = auth()->id();
+        $persen = $request->persen ?? 0;
         Jasa::create($request->all());
         
         $pengeluaran = new Pengeluaran();
         $pengeluaran->deskripsi = $request->deskripsi;
-        $pengeluaran->nominal   = $request->nominal * (1 - $request->persen / 100);
+        $pengeluaran->nominal   = $request->nominal * (1 - $persen / 100);
         $pengeluaran->id_user   = auth()->id();
         $pengeluaran->save();
 
@@ -150,52 +150,37 @@ class JasaController extends Controller
         $akhir = Carbon::parse($akhir)->endOfDay();
         if($text == 'cuci'){
             $title = 'Jasa Cuci';
-            if (auth()->user()->level == 4) {
-                $jasas = DB::table('jasas')
-                    ->join('users', 'jasas.id_user', '=', 'users.id')
-                    ->where([['users.level', 4], ['jasas.deskripsi', 'Jasa Cuci']])
-                    ->select('jasas.*')
-                    ->whereBetween('jasas.created_at', [$awal, $akhir])
-                    ->get();
-            } elseif (auth()->user()->level == 5) {
-                $jasas = DB::table('jasas')
-                    ->join('users', 'jasas.id_user', '=', 'users.id')
-                    ->where([['users.level', 5], ['jasas.deskripsi', 'Jasa Cuci']])
-                    ->select('jasas.*')
-                    ->whereBetween('jasas.created_at', [$awal, $akhir])
-                    ->get();
-            } else {
-                $jasas = DB::table('jasas')
-                    ->where('jasas.deskripsi', 'Jasa Cuci')
-                    ->select('jasas.*')
-                    ->whereBetween('jasas.created_at', [$awal, $akhir])
-                    ->get();
-            }
+            $deskripsi = 'Jasa Cuci';
         } elseif ($text == 'service') {
             $title = 'Jasa Service';
-            if (auth()->user()->level == 4) {
-                $jasas = DB::table('jasas')
-                    ->join('users', 'jasas.id_user', '=', 'users.id')
-                    ->where([['users.level', 4], ['jasas.deskripsi', 'Jasa Service']])
-                    ->select('jasas.*')
-                    ->whereBetween('jasas.created_at', [$awal, $akhir])
-                    ->get();
-            } elseif (auth()->user()->level == 5) {
-                $jasas = DB::table('jasas')
-                    ->join('users', 'jasas.id_user', '=', 'users.id')
-                    ->where([['users.level', 5], ['jasas.deskripsi', 'Jasa Service']])
-                    ->select('jasas.*')
-                    ->whereBetween('jasas.created_at', [$awal, $akhir])
-                    ->get();
-            } else {
-                $jasas = DB::table('jasas')
-                    ->where('jasas.deskripsi', 'Jasa Service')
-                    ->select('jasas.*')
-                    ->whereBetween('jasas.created_at', [$awal, $akhir])
-                    ->get();
-            }
+            $deskripsi = 'Jasa Service';
+        } elseif ($text == 'jilid') {
+            $title = 'Jasa Jilid';
+            $deskripsi = 'Jasa Jilid';
         }
 
+        if (auth()->user()->level == 4) {
+            $jasas = DB::table('jasas')
+                ->join('users', 'jasas.id_user', '=', 'users.id')
+                ->where([['users.level', 4], ['jasas.deskripsi', $deskripsi]])
+                ->select('jasas.*')
+                ->whereBetween('jasas.created_at', [$awal, $akhir])
+                ->get();
+        } elseif (in_array(auth()->user()->level, [1, 5, 8])) {
+            $jasas = DB::table('jasas')
+                ->join('users', 'jasas.id_user', '=', 'users.id')
+                ->whereIn('users.level', [1, 5, 8])
+                ->where('jasas.deskripsi', $deskripsi)
+                ->select('jasas.*')
+                ->whereBetween('jasas.created_at', [$awal, $akhir])
+                ->get();
+        } else {
+            $jasas = DB::table('jasas')
+                ->where('jasas.deskripsi', $deskripsi)
+                ->select('jasas.*')
+                ->whereBetween('jasas.created_at', [$awal, $akhir])
+                ->get();
+        }
 
         $jumlah = 0;
         foreach ($jasas as $item) {

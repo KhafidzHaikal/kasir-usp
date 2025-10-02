@@ -33,8 +33,17 @@
                                             <div class="col-sm-5">
                                                 <select id="jasa" class="form-control" required>
                                                     <option value="">Pilih Tipe</option>
-                                                    <option value="cuci">Jasa Cuci</option>
-                                                    <option value="service">Jasa Service</option>
+                                                    @if (auth()->user()->level == 1)
+                                                        <option value="all">Semua Jasa</option>
+                                                        
+                                                    @else
+                                                        
+                                                    @endif
+                                                    @if (!in_array(auth()->user()->level, [5, 8]))
+                                                        <option value="cuci">Jasa Cuci</option>
+                                                        <option value="service">Jasa Service</option>
+                                                    @endif
+                                                    <option value="jilid">Jasa Jilid</option>
                                                 </select>
                                             </div>
                                         </div>

@@ -16,8 +16,16 @@
                         <div class="col-lg-6">
                             <select name="deskripsi" id="deskripsi" class="form-control" required>
                                 <option value="">--- Pilih Jasa ---</option>
-                                <option value="Jasa Service">Jasa Service</option>
-                                <option value="Jasa Cuci">Jasa Cuci</option>
+                                @if (!in_array(auth()->user()->level, [5, 8]))
+                                    <option value="Jasa Service">Jasa Service</option>
+                                    <option value="Jasa Cuci">Jasa Cuci</option>
+                                @elseif (auth()->user()->level == 5 || auth()->user()->level == 8)
+                                    <option value="Jasa Jilid">Jasa Jilid</option>
+                                @else
+                                    <option value="Jasa Service">Jasa Service</option>
+                                    <option value="Jasa Cuci">Jasa Cuci</option>
+                                    <option value="Jasa Jilid">Jasa Jilid</option>
+                                @endif
                             </select>
                             {{-- <input type="text" name="deskripsi" id="deskripsi" class="form-control" required autofocus> --}}
                             <span class="help-block with-errors"></span>
@@ -33,14 +41,15 @@
                     <div class="form-group row">
                         <label for="persen" class="col-lg-2 col-lg-offset-1 control-label">Pembagian (%)</label>
                         <div class="col-lg-6">
-                            <input type="number" name="persen" id="persen" class="form-control" required>
+                            <input type="number" name="persen" id="persen" class="form-control" value="0" required>
                             <span class="help-block with-errors"></span>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-sm btn-flat btn-primary"><i class="fa fa-save"></i> Simpan</button>
-                    <button type="button" class="btn btn-sm btn-flat btn-warning" data-dismiss="modal"><i class="fa fa-arrow-circle-left"></i> Batal</button>
+                    <button type="button" class="btn btn-sm btn-flat btn-warning" data-dismiss="modal"><i
+                            class="fa fa-arrow-circle-left"></i> Batal</button>
                 </div>
             </div>
         </form>
