@@ -57,8 +57,8 @@ class PengeluaranController extends Controller
             ->addColumn('aksi', function ($pengeluaran) {
                 return '
                 <div class="btn-group">
-                    <button type="button" onclick="editForm(`' . route('pengeluaran.update', $pengeluaran->id_pengeluaran) . '`)" class="btn btn-info btn-flat"><i class="fa fa-pencil"></i></button>
-                    <button type="button" onclick="deleteData(`' . route('pengeluaran.destroy', $pengeluaran->id_pengeluaran) . '`)" class="btn btn-danger btn-flat"><i class="fa fa-trash"></i></button>
+                    <button type="button" onclick="editForm(`'. route('pengeluaran.update', $pengeluaran->id_pengeluaran) .'`)" class="btn btn-info btn-flat"><i class="fa fa-pencil"></i></button>
+                    <button type="button" onclick="deleteData(`'. route('pengeluaran.destroy', $pengeluaran->id_pengeluaran) .'`)" class="btn btn-danger btn-flat"><i class="fa fa-trash"></i></button>
                 </div>
                 ';
             })
@@ -140,52 +140,58 @@ class PengeluaranController extends Controller
 
         return response(null, 204);
     }
-
-    public function pdf($text, $awal, $akhir)
-    {
+    
+    public function pdf($text, $awal, $akhir) {
         $akhir = Carbon::parse($akhir)->endOfDay();
 
-        if ($text == 'cuci') {
-            $title = 'Jasa Cuci';
+       if ($text == 'cuci') {
+            $title = 'JASA CUCI';
             if (auth()->user()->level == 4 || auth()->user()->level == 1) {
                 $pengeluaran = DB::table('pengeluaran')
                     ->join('users', 'pengeluaran.id_user', '=', 'users.id')
-                    ->where([['users.level', 4], ['pengeluaran.deskripsi', 'Jasa Cuci']])
-                    ->orWhere([['users.level', 1], ['pengeluaran.deskripsi', 'Jasa Cuci']])
-                    ->select('pengeluaran.*')
+                    ->where(function ($q) {
+                        $q->where([['users.level', 4], ['pengeluaran.deskripsi', 'Jasa Cuci']])
+                          ->orWhere([['users.level', 1], ['pengeluaran.deskripsi', 'Jasa Cuci']]);
+                    })
                     ->whereBetween('pengeluaran.created_at', [$awal, $akhir])
+                    ->select('pengeluaran.*')
                     ->get();
             }
         } elseif ($text == 'service') {
-            $title = 'Jasa Service';
+            $title = 'JASA SERVICE';
             if (auth()->user()->level == 4 || auth()->user()->level == 1) {
                 $pengeluaran = DB::table('pengeluaran')
                     ->join('users', 'pengeluaran.id_user', '=', 'users.id')
-                    ->where([['users.level', 4], ['pengeluaran.deskripsi', 'Jasa Service']])
-                    ->orWhere([['users.level', 1], ['pengeluaran.deskripsi', 'Jasa Service']])
-                    ->select('pengeluaran.*')
+                    ->where(function ($q) {
+                        $q->where([['users.level', 4], ['pengeluaran.deskripsi', 'Jasa Service']])
+                          ->orWhere([['users.level', 1], ['pengeluaran.deskripsi', 'Jasa Service']]);
+                    })
                     ->whereBetween('pengeluaran.created_at', [$awal, $akhir])
+                    ->select('pengeluaran.*')
                     ->get();
             }
         } elseif ($text == 'operasional') {
-            $title = 'Jasa Operasional';
+            $title = 'JASA OPERASIONAL';
             if (auth()->user()->level == 4 || auth()->user()->level == 1) {
                 $pengeluaran = DB::table('pengeluaran')
                     ->join('users', 'pengeluaran.id_user', '=', 'users.id')
-                    ->where([['users.level', 4], ['pengeluaran.deskripsi', '!=', 'Jasa Service'], ['pengeluaran.deskripsi', '!=', 'Jasa Cuci']])
-                    ->select('pengeluaran.*')
+                    ->where('users.level', 4)
+                    ->whereNotIn('pengeluaran.deskripsi', ['Jasa Service', 'Jasa Cuci'])
                     ->whereBetween('pengeluaran.created_at', [$awal, $akhir])
+                    ->select('pengeluaran.*')
                     ->get();
             }
         } elseif ($text == 'semua') {
-            $title = 'Semua';
+            $title = 'UMUM';
             if (auth()->user()->level == 4) {
                 $pengeluaran = DB::table('pengeluaran')
                     ->join('users', 'pengeluaran.id_user', '=', 'users.id')
-                    ->where('users.level', 4)
-                    ->orWhere(function ($query) {
-                        $query->where('users.level', 1)
-                            ->whereIn('pengeluaran.deskripsi', ['Jasa Service', 'Jasa Cuci']);
+                    ->where(function ($q) {
+                        $q->where('users.level', 4)
+                          ->orWhere(function ($sub) {
+                              $sub->where('users.level', 1)
+                                  ->whereIn('pengeluaran.deskripsi', ['Jasa Service', 'Jasa Cuci']);
+                          });
                     })
                     ->whereBetween('pengeluaran.created_at', [$awal, $akhir])
                     ->select('pengeluaran.*')
@@ -193,8 +199,10 @@ class PengeluaranController extends Controller
             } elseif (auth()->user()->level == 5) {
                 $pengeluaran = DB::table('pengeluaran')
                     ->join('users', 'pengeluaran.id_user', '=', 'users.id')
-                    ->where('users.level', 5)
-                    ->orWhere('users.level', 8)
+                    ->where(function ($q) {
+                        $q->where('users.level', 5)
+                          ->orWhere('users.level', 8);
+                    })
                     ->whereBetween('pengeluaran.created_at', [$awal, $akhir])
                     ->select('pengeluaran.*')
                     ->get();
@@ -203,13 +211,16 @@ class PengeluaranController extends Controller
             } else {
                 $pengeluaran = DB::table('pengeluaran')
                     ->join('users', 'pengeluaran.id_user', '=', 'users.id')
-                    ->where('users.level', 2)
-                    ->orWhere('users.level', 6)
-                    ->select('pengeluaran.*')
+                    ->where(function ($q) {
+                        $q->where('users.level', 2)
+                          ->orWhere('users.level', 6);
+                    })
                     ->whereBetween('pengeluaran.created_at', [$awal, $akhir])
+                    ->select('pengeluaran.*')
                     ->get();
             }
         }
+
 
         $jumlah = 0;
         foreach ($pengeluaran as $item) {

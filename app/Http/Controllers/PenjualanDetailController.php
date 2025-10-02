@@ -9,33 +9,46 @@ use App\Models\Produk;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class PenjualanDetailController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
         if (auth()->user()->level == 4) {
             $produk = Produk::orderBy('nama_produk')->where([['id_kategori', 4], ['stok', '>=', 1]])->get();
-        } elseif (auth()->user()->level == 5 || auth()->user()->level == 8) {
+        }  elseif (auth()->user()->level == 5 || auth()->user()->level == 8) {
             $produk = Produk::orderBy('nama_produk')->where([['id_kategori', 5], ['stok', '>=', 1]])->get();
         } elseif (auth()->user()->level == 1) {
             $produk = Produk::orderBy('nama_produk')->where('stok', '>=', 1)->get();
         } else {
             $produk = Produk::orderBy('nama_produk')->where([['id_kategori', '!=', 4], ['id_kategori', '!=', 5], ['stok', '>=', 1]])->get();
         }
+        
         $member = Member::orderBy('nama')->get();
-        // $diskon = Setting::first()->diskon ?? 0;
         $diskon = 0;
         $data = response()->json($produk);
-        $searchQuery = $request->input('search');
-        $products = Produk::where('kode_produk', 'LIKE', "%{$searchQuery}%")->get();
+        $date = Carbon::now();
 
         // Cek apakah ada transaksi yang sedang berjalan
         if ($id_penjualan = session('id_penjualan')) {
             $penjualan = Penjualan::find($id_penjualan);
+            
+            // If transaction doesn't exist, clear session and redirect
+            if (!$penjualan) {
+                session()->forget('id_penjualan');
+                return redirect()->route('transaksi.baru');
+            }
+            
+            // If transaction is completed, clear session and redirect to new transaction
+            if ($penjualan->total_item > 0) {
+                session()->forget('id_penjualan');
+                return redirect()->route('transaksi.baru');
+            }
+            
             $memberSelected = $penjualan->member ?? new Member();
 
-            return view('penjualan_detail.index', compact('produk', 'products', 'data', 'member', 'diskon', 'id_penjualan', 'penjualan', 'memberSelected'));
+            return view('penjualan_detail.index', compact('produk', 'data', 'member', 'diskon', 'id_penjualan', 'penjualan', 'memberSelected', 'date'));
         } else {
             if (auth()->user()->level == 1) {
                 return redirect()->route('transaksi.baru');
@@ -55,7 +68,7 @@ class PenjualanDetailController extends Controller
         $total = 0;
         $total_item = 0;
 
-        foreach ($detail as $item) {
+        foreach ($detail as $item) {            
             $row = array();
             $row['kode_produk'] = '<span class="label label-success">' . $item->produk['kode_produk'] . '</span';
             $row['nama_produk'] = $item->produk['nama_produk'];
@@ -82,12 +95,12 @@ class PenjualanDetailController extends Controller
             'subtotal'    => '',
             'aksi'        => '',
         ];
-
+        
         return datatables()
-            ->of($data)
-            ->addIndexColumn()
-            ->rawColumns(['aksi', 'kode_produk', 'jumlah'])
-            ->make(true);
+        ->of($data)
+        ->addIndexColumn()
+        ->rawColumns(['aksi', 'kode_produk', 'jumlah'])
+        ->make(true);
     }
 
     public function store(Request $request)
@@ -96,6 +109,12 @@ class PenjualanDetailController extends Controller
         if (!$produk) {
             return response()->json('Data gagal disimpan', 400);
         }
+        
+        // Check if product has sufficient stock
+        if ($produk->stok < 1) {
+            return response()->json('Stok produk tidak mencukupi', 400);
+        }
+        
         $detail = new PenjualanDetail();
         $detail->id_penjualan = $request->id_penjualan;
         $detail->id_produk = $produk->id_produk;
@@ -103,6 +122,8 @@ class PenjualanDetailController extends Controller
         $detail->jumlah = 1;
         $detail->diskon = 0;
         $detail->subtotal = $produk->harga_jual;
+        $detail->created_at = $request->created_at;
+        $detail->updated_at = $request->created_at;
         $detail->save();
 
         return response()->json('Data berhasil disimpan', 200);
@@ -111,9 +132,18 @@ class PenjualanDetailController extends Controller
     public function update(Request $request, $id)
     {
         $detail = PenjualanDetail::find($id);
+        $produk = Produk::find($detail->id_produk);
+        
+        // Check if requested quantity exceeds available stock
+        if ($request->jumlah > $produk->stok) {
+            return response()->json('Jumlah melebihi stok yang tersedia', 400);
+        }
+        
         $detail->jumlah = $request->jumlah;
         $detail->subtotal = $detail->harga_jual * $request->jumlah;
         $detail->update();
+        
+        return response()->json('Data berhasil diupdate', 200);
     }
 
     public function destroy($id)
@@ -122,6 +152,28 @@ class PenjualanDetailController extends Controller
         $detail->delete();
 
         return response(null, 204);
+    }
+    
+    public function cancelTransaction($id_penjualan)
+    {
+        // Get all transaction details
+        $details = PenjualanDetail::where('id_penjualan', $id_penjualan)->get();
+        
+        // Reverse stock for each product if transaction was not completed
+        foreach ($details as $detail) {
+            $produk = Produk::find($detail->id_produk);
+            if ($produk) {
+                // Only reverse stock if transaction was not saved (no stock reduction happened)
+                // This is handled by checking if the main transaction has total_item = 0
+                $penjualan = Penjualan::find($id_penjualan);
+                if ($penjualan && $penjualan->total_item == 0) {
+                    // No stock reversal needed as stock was never reduced
+                }
+            }
+            $detail->delete();
+        }
+        
+        return response()->json('Transaksi dibatalkan', 200);
     }
 
     public function loadForm($diskon = 0, $total = 0, $diterima = 0)
@@ -145,15 +197,19 @@ class PenjualanDetailController extends Controller
         $produk = Produk::findOrFail($id_produk);
         return response()->json($produk);
     }
-
-
+    
     public function search(Request $request)
     {
         $kode_produk = $request->input('kode_produk');
 
         $produk = DB::table('produk')->where('produk.kode_produk', '=', $kode_produk)->first();
         if (!$produk) {
-            return response()->json('Data gagal disimpan', 400);
+            return response()->json('Produk tidak ditemukan', 400);
+        }
+        
+        // Check if product has sufficient stock
+        if ($produk->stok < 1) {
+            return response()->json('Stok produk tidak mencukupi', 400);
         }
 
         $detail = new PenjualanDetail();

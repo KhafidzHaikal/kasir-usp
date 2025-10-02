@@ -3,10 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Jasa;
-use App\Http\Requests\StoreJasaRequest;
-use App\Http\Requests\UpdateJasaRequest;
-use App\Models\Pengeluaran;
 use App\Models\Setting;
+use App\Models\Pengeluaran;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -40,7 +38,7 @@ class JasaController extends Controller
                 ->get();
         } else {
             $jasa = Jasa::orderBy('id_jasa', 'desc')->get();
-        } 
+        }
 
         return datatables()
             ->of($jasa)
@@ -54,10 +52,11 @@ class JasaController extends Controller
             ->addColumn('aksi', function ($jasa) {
                 return '
                 <div class="btn-group">
+                    <button type="button" onclick="editForm(`' . route('jasa.update', $jasa->id_jasa) . '`)" class="btn btn-info btn-flat"><i class="fa fa-pencil"></i></button>
                     <button type="button" onclick="nota(`' . route('transaksi.jasa', $jasa->id_jasa) . '`)" class="btn btn-warning btn-flat"><i class="fa fa-print"></i></button>
                     <button type="button" onclick="deleteData(`' . route('jasa.destroy', $jasa->id_jasa) . '`)" class="btn btn-danger btn-flat"><i class="fa fa-trash"></i></button>
                 </div>
-                    ';
+                ';
             })
             ->rawColumns(['aksi'])
             ->make(true);
@@ -85,9 +84,9 @@ class JasaController extends Controller
         Jasa::create($request->all());
         
         $pengeluaran = new Pengeluaran();
-        $pengeluaran['deskripsi'] = $request['deskripsi'];
-        $pengeluaran['nominal'] = $request['nominal'] * ($request['persen']/100);
-        $pengeluaran['id_user'] = auth()->id();
+        $pengeluaran->deskripsi = $request->deskripsi;
+        $pengeluaran->nominal   = $request->nominal * (1 - $request->persen / 100);
+        $pengeluaran->id_user   = auth()->id();
         $pengeluaran->save();
 
         return response()->json('Data berhasil disimpan', 200);
@@ -142,6 +141,7 @@ class JasaController extends Controller
     {
         $jasa = Jasa::find($id);
         $jasa->delete();
+        
         return response(null, 204);
     }
 
@@ -196,6 +196,7 @@ class JasaController extends Controller
             }
         }
 
+
         $jumlah = 0;
         foreach ($jasas as $item) {
             $jumlah += $item->nominal;
@@ -204,7 +205,7 @@ class JasaController extends Controller
             'awal' => $awal, 'akhir' => $akhir, 'jasas' => $jasas, 'jumlah' => $jumlah, 'title' => $title
         ]);
     }
-
+    
     public function nota($id)
     {
         $setting = Setting::first();

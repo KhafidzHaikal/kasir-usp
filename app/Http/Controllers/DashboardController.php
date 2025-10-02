@@ -11,11 +11,14 @@ use App\Models\Pembelian;
 use App\Models\Penjualan;
 use App\Models\Pengeluaran;
 use RealRashid\SweetAlert\Facades\Alert;
+use App\Http\Controllers\PenjualanController;
 
 class DashboardController extends Controller
 {
     public function index()
     {
+        // Clean up incomplete transactions
+        PenjualanController::cleanupIncompleteTransactions();
         $kategori = Kategori::count();
 
         if (auth()->user()->level == 4) {

@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Jasa;
 use Carbon\Carbon;
 
 use App\Models\Produk;
 use App\Models\Pembelian;
 use App\Models\Penjualan;
 use App\Models\Pengeluaran;
+use App\Models\Jasa;
 use Illuminate\Http\Request;
 use App\Models\PembelianDetail;
 use Illuminate\Support\Facades\DB;
@@ -60,19 +60,16 @@ class LaporanController extends Controller
                 $total_penjualan = DB::table('penjualan')
                     ->join('users', 'penjualan.id_user', '=', 'users.id')
                     ->where([['penjualan.created_at', 'LIKE', "%$tanggal%"], ['users.level', 5]])
-                    ->orWhere([['penjualan.created_at', 'LIKE', "%$tanggal%"], ['users.level', 8]])
                     ->sum('penjualan.bayar');
 
                 $total_pembelian = DB::table('pembelian')
                     ->join('users', 'pembelian.id_user', '=', 'users.id')
                     ->where([['pembelian.created_at', 'LIKE', "%$tanggal%"], ['users.level', 5]])
-                    ->orWhere([['pembelian.created_at', 'LIKE', "%$tanggal%"], ['users.level', 8]])
                     ->sum('pembelian.bayar');
 
                 $total_pengeluaran = DB::table('pengeluaran')
                     ->join('users', 'pengeluaran.id_user', '=', 'users.id')
                     ->where([['pengeluaran.created_at', 'LIKE', "%$tanggal%"], ['users.level', 5]])
-                    ->orWhere([['pengeluaran.created_at', 'LIKE', "%$tanggal%"], ['users.level', 8]])
                     ->sum('pengeluaran.nominal');
             } elseif (auth()->user()->level == 8) {
                 $total_penjualan = DB::table('penjualan')
@@ -93,41 +90,22 @@ class LaporanController extends Controller
                 $total_penjualan = Penjualan::where('created_at', 'LIKE', "%$tanggal%")->sum('bayar');
                 $total_pembelian = Pembelian::where('created_at', 'LIKE', "%$tanggal%")->sum('bayar');
                 $total_pengeluaran = Pengeluaran::where('created_at', 'LIKE', "%$tanggal%")->sum('nominal');
-            } elseif (auth()->user()->level == 2) {
+            } else {
                 $total_penjualan = DB::table('penjualan')
                     ->join('users', 'penjualan.id_user', '=', 'users.id')
                     ->where([['penjualan.created_at', 'LIKE', "%$tanggal%"], ['users.level', 2]])
-                    ->orWhere([['penjualan.created_at', 'LIKE', "%$tanggal%"], ['users.level', 6]])
                     ->sum('penjualan.bayar');
 
                 $total_pembelian = DB::table('pembelian')
                     ->join('users', 'pembelian.id_user', '=', 'users.id')
                     ->where([['pembelian.created_at', 'LIKE', "%$tanggal%"], ['users.level', 2]])
-                    ->orWhere([['pembelian.created_at', 'LIKE', "%$tanggal%"], ['users.level', 6]])
                     ->sum('pembelian.bayar');
 
                 $total_pengeluaran = DB::table('pengeluaran')
                     ->join('users', 'pengeluaran.id_user', '=', 'users.id')
                     ->where([['pengeluaran.created_at', 'LIKE', "%$tanggal%"], ['users.level', 2]])
-                    ->orWhere([['pengeluaran.created_at', 'LIKE', "%$tanggal%"], ['users.level', 6]])
-                    ->sum('pengeluaran.nominal');
-            } else {
-                $total_penjualan = DB::table('penjualan')
-                    ->join('users', 'penjualan.id_user', '=', 'users.id')
-                    ->where([['penjualan.created_at', 'LIKE', "%$tanggal%"], ['users.level', 6]])
-                    ->sum('penjualan.bayar');
-
-                $total_pembelian = DB::table('pembelian')
-                    ->join('users', 'pembelian.id_user', '=', 'users.id')
-                    ->where([['pembelian.created_at', 'LIKE', "%$tanggal%"], ['users.level', 6]])
-                    ->sum('pembelian.bayar');
-
-                $total_pengeluaran = DB::table('pengeluaran')
-                    ->join('users', 'pengeluaran.id_user', '=', 'users.id')
-                    ->where([['pengeluaran.created_at', 'LIKE', "%$tanggal%"], ['users.level', 6]])
                     ->sum('pengeluaran.nominal');
             }
-
 
             $pendapatan = $total_penjualan - $total_pembelian - $total_pengeluaran;
             $total_pendapatan += $pendapatan;
@@ -152,6 +130,7 @@ class LaporanController extends Controller
             'pendapatan' => format_uang($total_pendapatan),
         ];
 
+        // dd($data);
         return $data;
     }
 
@@ -194,19 +173,16 @@ class LaporanController extends Controller
                 $total_penjualan = DB::table('penjualan')
                     ->join('users', 'penjualan.id_user', '=', 'users.id')
                     ->where([['penjualan.created_at', 'LIKE', "%$tanggal%"], ['users.level', 5]])
-                    ->orWhere([['penjualan.created_at', 'LIKE', "%$tanggal%"], ['users.level', 8]])
                     ->sum('penjualan.bayar');
 
                 $total_pembelian = DB::table('pembelian')
                     ->join('users', 'pembelian.id_user', '=', 'users.id')
                     ->where([['pembelian.created_at', 'LIKE', "%$tanggal%"], ['users.level', 5]])
-                    ->orWhere([['pembelian.created_at', 'LIKE', "%$tanggal%"], ['users.level', 8]])
                     ->sum('pembelian.bayar');
 
                 $total_pengeluaran = DB::table('pengeluaran')
                     ->join('users', 'pengeluaran.id_user', '=', 'users.id')
                     ->where([['pengeluaran.created_at', 'LIKE', "%$tanggal%"], ['users.level', 5]])
-                    ->orWhere([['pengeluaran.created_at', 'LIKE', "%$tanggal%"], ['users.level', 8]])
                     ->sum('pengeluaran.nominal');
             } elseif (auth()->user()->level == 8) {
                 $total_penjualan = DB::table('penjualan')
@@ -227,38 +203,20 @@ class LaporanController extends Controller
                 $total_penjualan = Penjualan::where('created_at', 'LIKE', "%$tanggal%")->sum('bayar');
                 $total_pembelian = Pembelian::where('created_at', 'LIKE', "%$tanggal%")->sum('bayar');
                 $total_pengeluaran = Pengeluaran::where('created_at', 'LIKE', "%$tanggal%")->sum('nominal');
-            } elseif (auth()->user()->level == 2) {
+            } else {
                 $total_penjualan = DB::table('penjualan')
                     ->join('users', 'penjualan.id_user', '=', 'users.id')
                     ->where([['penjualan.created_at', 'LIKE', "%$tanggal%"], ['users.level', 2]])
-                    ->orWhere([['penjualan.created_at', 'LIKE', "%$tanggal%"], ['users.level', 6]])
                     ->sum('penjualan.bayar');
 
                 $total_pembelian = DB::table('pembelian')
                     ->join('users', 'pembelian.id_user', '=', 'users.id')
                     ->where([['pembelian.created_at', 'LIKE', "%$tanggal%"], ['users.level', 2]])
-                    ->orWhere([['pembelian.created_at', 'LIKE', "%$tanggal%"], ['users.level', 6]])
                     ->sum('pembelian.bayar');
 
                 $total_pengeluaran = DB::table('pengeluaran')
                     ->join('users', 'pengeluaran.id_user', '=', 'users.id')
                     ->where([['pengeluaran.created_at', 'LIKE', "%$tanggal%"], ['users.level', 2]])
-                    ->orWhere([['pengeluaran.created_at', 'LIKE', "%$tanggal%"], ['users.level', 6]])
-                    ->sum('pengeluaran.nominal');
-            } else {
-                $total_penjualan = DB::table('penjualan')
-                    ->join('users', 'penjualan.id_user', '=', 'users.id')
-                    ->where([['penjualan.created_at', 'LIKE', "%$tanggal%"], ['users.level', 6]])
-                    ->sum('penjualan.bayar');
-
-                $total_pembelian = DB::table('pembelian')
-                    ->join('users', 'pembelian.id_user', '=', 'users.id')
-                    ->where([['pembelian.created_at', 'LIKE', "%$tanggal%"], ['users.level', 6]])
-                    ->sum('pembelian.bayar');
-
-                $total_pengeluaran = DB::table('pengeluaran')
-                    ->join('users', 'pengeluaran.id_user', '=', 'users.id')
-                    ->where([['pengeluaran.created_at', 'LIKE', "%$tanggal%"], ['users.level', 6]])
                     ->sum('pengeluaran.nominal');
             }
 
@@ -288,9 +246,8 @@ class LaporanController extends Controller
         $data = collect($data)->map(function ($item) {
             return (object) $item;
         });
-        $pdf  = Barpdf::loadView('laporan.pdf', compact('awal', 'akhir', 'data'))->setPaper('a4', 'potrait');
-
-        return $pdf->stream('Laporan-pendapatan-' . date('Y-m-d-his') . '.pdf');
+        
+        return view('laporan.pdf', ['awal' => $awal, 'akhir' => $akhir, 'data' => $data]);
     }
 
     public function labaPdf($awal, $akhir)
@@ -305,9 +262,9 @@ class LaporanController extends Controller
                 'backup_produks.nama_produk',
                 'backup_produks.satuan',
                 'backup_produks.harga_beli',
-                DB::raw('(select sum(jumlah) from pembelian_detail where pembelian_detail.id_produk = backup_produks.id_produk and pembelian_detail.created_at between "' . $awal . '" and "' . $akhir . '" group by pembelian_detail.id_produk) as stok_belanja'),
+                DB::raw('(select sum(jumlah) from pembelian_detail where pembelian_detail.id_produk = backup_produks.id_produk and pembelian_detail.created_at between "'.$awal.'" and "'.$akhir.'" group by pembelian_detail.id_produk) as stok_belanja'),
                 'backup_produks.created_at',
-                'produk.harga_jual',
+                'produk.harga_jual'
             )
             ->groupBy('backup_produks.id_produk')
             ->get();
@@ -319,78 +276,55 @@ class LaporanController extends Controller
             $total_laba_rugi += ($row->harga_jual * $row->stok_belanja) - ($row->harga_beli * $row->stok_belanja);
         }
 
-        // dd($total_laba_rugi);
-        $pdf = PDF::loadView('laporan.laba_rugi', compact('awal', 'akhir', 'results', 'total_laba_rugi'))->setPaper('a4');
-        return $pdf->inline('Laporan-laba_Rugi-' . date('Y-m-d-his') . '.pdf');
+        return view('laporan.laba_rugi', [
+            'awal' => $awal, 'akhir' => $akhir, 'results' => $results, 'total_laba_rugi' => $total_laba_rugi
+            ]);
     }
 
     public function hpp($tanggal_awal, $tanggal_akhir)
     {
         $tanggal_akhir = Carbon::parse($tanggal_akhir)->endOfDay();
-
+        
+        $baseQuery = DB::table('backup_produks as bp')
+            ->join('produk as p', 'bp.id_produk', '=', 'p.id_produk')
+            ->leftJoin(DB::raw("(
+                SELECT id_produk, SUM(jumlah) as total_belanja 
+                FROM pembelian_detail 
+                WHERE created_at BETWEEN '$tanggal_awal' AND '$tanggal_akhir' 
+                GROUP BY id_produk
+            ) as pd"), 'bp.id_produk', '=', 'pd.id_produk')
+            ->leftJoin(DB::raw("(
+                SELECT id_produk, 
+                    FIRST_VALUE(stok_awal) OVER (PARTITION BY id_produk ORDER BY created_at ASC) as first_stok_awal
+                FROM backup_produks 
+                WHERE created_at >= '$tanggal_awal'
+            ) as bp_awal"), 'bp.id_produk', '=', 'bp_awal.id_produk')
+            ->leftJoin(DB::raw("(
+                SELECT id_produk, 
+                    FIRST_VALUE(stok_akhir) OVER (PARTITION BY id_produk ORDER BY created_at DESC) as last_stok_akhir
+                FROM backup_produks 
+                WHERE created_at <= '$tanggal_akhir'
+            ) as bp_akhir"), 'bp.id_produk', '=', 'bp_akhir.id_produk')
+            ->whereBetween('bp.created_at', [$tanggal_awal, $tanggal_akhir])
+            ->select(
+                'bp.id_produk',
+                'bp.nama_produk',
+                'bp.satuan',
+                'bp.harga_beli',
+                DB::raw('COALESCE(bp_awal.first_stok_awal, 0) as stok_awal'),
+                DB::raw('COALESCE(bp_akhir.last_stok_akhir, 0) as stok_akhir'),
+                DB::raw('COALESCE(pd.total_belanja, 0) as stok_belanja')
+            )
+            ->groupBy('bp.id_produk', 'bp.nama_produk', 'bp.satuan', 'bp.harga_beli', 'bp_awal.first_stok_awal', 'bp_akhir.last_stok_akhir', 'pd.total_belanja');
+        
         if (auth()->user()->level == 1) {
-            $results = DB::table('backup_produks as bp')
-                ->join('produk as p', 'bp.id_produk', '=', 'p.id_produk')
-                ->whereBetween('bp.created_at', [$tanggal_awal, $tanggal_akhir])
-                ->select(
-                    'bp.id_produk',
-                    'bp.nama_produk',
-                    'bp.satuan',
-                    'bp.harga_beli',
-                    DB::raw("COALESCE((SELECT stok_awal FROM backup_produks WHERE id_produk = bp.id_produk AND created_at >= '$tanggal_awal' ORDER BY created_at ASC LIMIT 1), 0) as stok_awal"),
-                    DB::raw("COALESCE((SELECT stok_akhir FROM backup_produks WHERE id_produk = bp.id_produk AND created_at <= '$tanggal_akhir' ORDER BY created_at DESC LIMIT 1), 0) as stok_akhir"),
-                    DB::raw("COALESCE((SELECT SUM(jumlah) FROM pembelian_detail WHERE id_produk = bp.id_produk AND created_at BETWEEN '$tanggal_awal' AND '$tanggal_akhir'), 0) as stok_belanja")
-                )
-                ->groupBy('bp.id_produk', 'bp.nama_produk', 'bp.satuan', 'bp.harga_beli')
-                ->get();
+            $results = $baseQuery->get();
         } elseif (auth()->user()->level == 4) {
-            $results = DB::table('backup_produks as bp')
-                ->where('bp.id_kategori', 4)
-                ->join('produk as p', 'bp.id_produk', '=', 'p.id_produk')
-                ->whereBetween('bp.created_at', [$tanggal_awal, $tanggal_akhir])
-                ->select(
-                    'bp.id_produk',
-                    'bp.nama_produk',
-                    'bp.satuan',
-                    'bp.harga_beli',
-                    DB::raw("COALESCE((SELECT stok_awal FROM backup_produks WHERE id_produk = bp.id_produk AND created_at >= '$tanggal_awal' ORDER BY created_at ASC LIMIT 1), 0) as stok_awal"),
-                    DB::raw("COALESCE((SELECT stok_akhir FROM backup_produks WHERE id_produk = bp.id_produk AND created_at <= '$tanggal_akhir' ORDER BY created_at DESC LIMIT 1), 0) as stok_akhir"),
-                    DB::raw("COALESCE((SELECT SUM(jumlah) FROM pembelian_detail WHERE id_produk = bp.id_produk AND created_at BETWEEN '$tanggal_awal' AND '$tanggal_akhir'), 0) as stok_belanja")
-                )
-                ->groupBy('bp.id_produk', 'bp.nama_produk', 'bp.satuan', 'bp.harga_beli')
-                ->get();
+            $results = $baseQuery->where('bp.id_kategori', 4)->get();
         } elseif (auth()->user()->level == 5) {
-            $results = DB::table('backup_produks as bp')
-                ->where('bp.id_kategori', 5)
-                ->join('produk as p', 'bp.id_produk', '=', 'p.id_produk')
-                ->whereBetween('bp.created_at', [$tanggal_awal, $tanggal_akhir])
-                ->select(
-                    'bp.id_produk',
-                    'bp.nama_produk',
-                    'bp.satuan',
-                    'bp.harga_beli',
-                    DB::raw("COALESCE((SELECT stok_awal FROM backup_produks WHERE id_produk = bp.id_produk AND created_at >= '$tanggal_awal' ORDER BY created_at ASC LIMIT 1), 0) as stok_awal"),
-                    DB::raw("COALESCE((SELECT stok_akhir FROM backup_produks WHERE id_produk = bp.id_produk AND created_at <= '$tanggal_akhir' ORDER BY created_at DESC LIMIT 1), 0) as stok_akhir"),
-                    DB::raw("COALESCE((SELECT SUM(jumlah) FROM pembelian_detail WHERE id_produk = bp.id_produk AND created_at BETWEEN '$tanggal_awal' AND '$tanggal_akhir'), 0) as stok_belanja")
-                )
-                ->groupBy('bp.id_produk', 'bp.nama_produk', 'bp.satuan', 'bp.harga_beli')
-                ->get();
+            $results = $baseQuery->where('bp.id_kategori', 5)->get();
         } else {
-            $results = DB::table('backup_produks as bp')
-                ->where([['bp.id_kategori', '!=', 4], ['bp.id_kategori', '!=', 5]])
-                ->join('produk as p', 'bp.id_produk', '=', 'p.id_produk')
-                ->whereBetween('bp.created_at', [$tanggal_awal, $tanggal_akhir])
-                ->select(
-                    'bp.id_produk',
-                    'bp.nama_produk',
-                    'bp.satuan',
-                    'bp.harga_beli',
-                    DB::raw("COALESCE((SELECT stok_awal FROM backup_produks WHERE id_produk = bp.id_produk AND created_at >= '$tanggal_awal' ORDER BY created_at ASC LIMIT 1), 0) as stok_awal"),
-                    DB::raw("COALESCE((SELECT stok_akhir FROM backup_produks WHERE id_produk = bp.id_produk AND created_at <= '$tanggal_akhir' ORDER BY created_at DESC LIMIT 1), 0) as stok_akhir"),
-                    DB::raw("COALESCE((SELECT SUM(jumlah) FROM pembelian_detail WHERE id_produk = bp.id_produk AND created_at BETWEEN '$tanggal_awal' AND '$tanggal_akhir'), 0) as stok_belanja")
-                )
-                ->groupBy('bp.id_produk', 'bp.nama_produk', 'bp.satuan', 'bp.harga_beli')
-                ->get();
+            $results = $baseQuery->where([['bp.id_kategori', '!=', 4], ['bp.id_kategori', '!=', 5]])->get();
         }
 
         $totalValue = 0;
@@ -404,15 +338,15 @@ class LaporanController extends Controller
             $stok_belanja = (float) ($result->stok_belanja ?? 0);
             $stok_akhir = (float) ($result->stok_akhir ?? 0);
             $harga_beli = (float) ($result->harga_beli ?? 0);
-
+            
             // Calculate HPP with proper null handling
             $hpp = (($harga_beli * $stok_awal) + ($stok_belanja * $harga_beli)) - ($harga_beli * $stok_akhir);
-
+            
             $totalValue += $hpp;
             $totalAwal += $harga_beli * $stok_awal;
             $totalBeli += $stok_belanja * $harga_beli;
             $totalAkhir += $harga_beli * $stok_akhir;
-
+            
             // Update result object with calculated values
             $result->stok_awal = $stok_awal;
             $result->stok_belanja = $stok_belanja;
@@ -420,100 +354,65 @@ class LaporanController extends Controller
             $result->harga_beli = $harga_beli;
         }
 
-        return view('laporan.hpp', compact('tanggal_awal', 'tanggal_akhir', 'results', 'totalValue', 'totalAwal', 'totalBeli', 'totalAkhir'));
+       return view('laporan.hpp', compact('tanggal_awal', 'tanggal_akhir', 'results', 'totalValue', 'totalAwal', 'totalBeli', 'totalAkhir'));
     }
-
-    public function hasil_usaha($tanggal_awal, $tanggal_akhir)
-    {
-        $tanggal_akhir = Carbon::parse($tanggal_akhir)->endOfDay();
+    
+    public function hasil_usaha($tanggal_awal, $tanggal_akhir) {
+       $tanggal_akhir = Carbon::parse($tanggal_akhir)->endOfDay();
         $jasa = Jasa::whereBetween('created_at', [$tanggal_awal, $tanggal_akhir])
             ->sum('nominal');
+            
+        $baseQuery = DB::table('backup_produks as bp')
+            ->join('produk as p', 'bp.id_produk', '=', 'p.id_produk')
+            ->leftJoin(DB::raw("(
+                SELECT id_produk, SUM(jumlah) as total_belanja 
+                FROM pembelian_detail 
+                WHERE created_at BETWEEN '$tanggal_awal' AND '$tanggal_akhir' 
+                GROUP BY id_produk
+            ) as pd"), 'bp.id_produk', '=', 'pd.id_produk')
+            ->leftJoin(DB::raw("(
+                SELECT id_produk, 
+                    FIRST_VALUE(stok_awal) OVER (PARTITION BY id_produk ORDER BY created_at ASC) as first_stok_awal
+                FROM backup_produks 
+                WHERE created_at >= '$tanggal_awal'
+            ) as bp_awal"), 'bp.id_produk', '=', 'bp_awal.id_produk')
+            ->leftJoin(DB::raw("(
+                SELECT id_produk, 
+                    FIRST_VALUE(stok_akhir) OVER (PARTITION BY id_produk ORDER BY created_at DESC) as last_stok_akhir
+                FROM backup_produks 
+                WHERE created_at <= '$tanggal_akhir'
+            ) as bp_akhir"), 'bp.id_produk', '=', 'bp_akhir.id_produk')
+            ->whereBetween('bp.created_at', [$tanggal_awal, $tanggal_akhir])
+            ->select(
+                'bp.id_produk',
+                'bp.nama_produk',
+                'bp.satuan',
+                'bp.harga_beli',
+                DB::raw('COALESCE(bp_awal.first_stok_awal, 0) as stok_awal'),
+                DB::raw('COALESCE(bp_akhir.last_stok_akhir, 0) as stok_akhir'),
+                DB::raw('COALESCE(pd.total_belanja, 0) as stok_belanja')
+            )
+            ->groupBy('bp.id_produk', 'bp.nama_produk', 'bp.satuan', 'bp.harga_beli', 'bp_awal.first_stok_awal', 'bp_akhir.last_stok_akhir', 'pd.total_belanja');
+            
         if (auth()->user()->level == 4) {
-            $results = DB::table('backup_produks')
-                ->where('backup_produks.id_kategori', 4)
-                ->join('produk', 'backup_produks.id_produk', '=', 'produk.id_produk')
-                ->leftJoin('pembelian_detail', 'produk.id_produk', '=', 'pembelian_detail.id_produk')
-                ->whereBetween('backup_produks.created_at', [$tanggal_awal, $tanggal_akhir])
-                ->select(
-                    'backup_produks.id_produk',
-                    'backup_produks.nama_produk',
-                    'backup_produks.satuan',
-                    'backup_produks.harga_beli',
-                    DB::raw("(select stok_awal from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at >= '$tanggal_awal' order by created_at asc limit 1) as stok_awal"),
-                    DB::raw("(select stok_akhir from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at <= '$tanggal_akhir' order by created_at desc limit 1) as stok_akhir"),
-                    DB::raw("(select stok_belanja from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at <= '$tanggal_akhir' order by created_at desc limit 1) as stok_belanja"),
-                    DB::raw("(SELECT SUM(jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk and pembelian_detail.created_at between '" . $tanggal_awal . "' and '" . $tanggal_akhir . "' ) as total_jumlah_pembelian"),
-                )
-                ->groupBy('backup_produks.id_produk')
-                ->get();
-
+            $results = $baseQuery->where('bp.id_kategori', 4)->get();
             $penjualan = DB::table('penjualan_detail')
                 ->join('produk', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
                 ->where('produk.id_kategori', 4)
                 ->whereBetween('penjualan_detail.created_at', [$tanggal_awal, $tanggal_akhir])
                 ->sum('penjualan_detail.subtotal');
         } elseif (auth()->user()->level == 5) {
-            $results = DB::table('backup_produks')
-                ->where('backup_produks.id_kategori', 5)
-                ->join('produk', 'backup_produks.id_produk', '=', 'produk.id_produk')
-                ->leftJoin('pembelian_detail', 'produk.id_produk', '=', 'pembelian_detail.id_produk')
-                ->whereBetween('backup_produks.created_at', [$tanggal_awal, $tanggal_akhir])
-                ->select(
-                    'backup_produks.id_produk',
-                    'backup_produks.nama_produk',
-                    'backup_produks.satuan',
-                    'backup_produks.harga_beli',
-                    DB::raw("(select stok_awal from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at >= '$tanggal_awal' order by created_at asc limit 1) as stok_awal"),
-                    DB::raw("(select stok_akhir from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at <= '$tanggal_akhir' order by created_at desc limit 1) as stok_akhir"),
-                    DB::raw("(select stok_belanja from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at <= '$tanggal_akhir' order by created_at desc limit 1) as stok_belanja"),
-                    DB::raw("(SELECT SUM(jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk and pembelian_detail.created_at between '" . $tanggal_awal . "' and '" . $tanggal_akhir . "' ) as total_jumlah_pembelian"),
-                )
-                ->groupBy('backup_produks.id_produk')
-                ->get();
-
+            $results = $baseQuery->where('bp.id_kategori', 5)->get();
             $penjualan = DB::table('penjualan_detail')
                 ->join('produk', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
                 ->where('produk.id_kategori', 5)
                 ->whereBetween('penjualan_detail.created_at', [$tanggal_awal, $tanggal_akhir])
                 ->sum('penjualan_detail.subtotal');
         } elseif (auth()->user()->level == 1) {
-            $results = DB::table('backup_produks')
-                ->join('produk', 'backup_produks.id_produk', '=', 'produk.id_produk')
-                ->leftJoin('pembelian_detail', 'produk.id_produk', '=', 'pembelian_detail.id_produk')
-                ->whereBetween('backup_produks.created_at', [$tanggal_awal, $tanggal_akhir])
-                ->select(
-                    'backup_produks.id_produk',
-                    'backup_produks.nama_produk',
-                    'backup_produks.satuan',
-                    'backup_produks.harga_beli',
-                    DB::raw("(select stok_awal from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at >= '$tanggal_awal' order by created_at asc limit 1) as stok_awal"),
-                    DB::raw("(select stok_akhir from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at <= '$tanggal_akhir' order by created_at desc limit 1) as stok_akhir"),
-                    DB::raw("(select stok_belanja from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at <= '$tanggal_akhir' order by created_at desc limit 1) as stok_belanja"),
-                    DB::raw("(SELECT SUM(jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk and pembelian_detail.created_at between '" . $tanggal_awal . "' and '" . $tanggal_akhir . "' ) as total_jumlah_pembelian"),
-                )
-                ->groupBy('backup_produks.id_produk')
-                ->get();
-
+            $results = $baseQuery->get();
             $penjualan = DB::table('penjualan_detail')->whereBetween('created_at', [$tanggal_awal, $tanggal_akhir])->sum('subtotal');
         } else {
-            $results = DB::table('backup_produks')
-                ->where([['backup_produks.id_kategori', '!=', 4], ['backup_produks.id_kategori', '!=', 5]])
-                ->join('produk', 'backup_produks.id_produk', '=', 'produk.id_produk')
-                ->leftJoin('pembelian_detail', 'produk.id_produk', '=', 'pembelian_detail.id_produk')
-                ->whereBetween('backup_produks.created_at', [$tanggal_awal, $tanggal_akhir])
-                ->select(
-                    'backup_produks.id_produk',
-                    'backup_produks.nama_produk',
-                    'backup_produks.satuan',
-                    'backup_produks.harga_beli',
-                    DB::raw("(select stok_awal from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at >= '$tanggal_awal' order by created_at asc limit 1) as stok_awal"),
-                    DB::raw("(select stok_akhir from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at <= '$tanggal_akhir' order by created_at desc limit 1) as stok_akhir"),
-                    DB::raw("(select stok_belanja from backup_produks as bp where bp.id_produk = backup_produks.id_produk and bp.created_at <= '$tanggal_akhir' order by created_at desc limit 1) as stok_belanja"),
-                    DB::raw("(SELECT SUM(jumlah) FROM pembelian_detail pembelian_detail WHERE pembelian_detail.id_produk = produk.id_produk and pembelian_detail.created_at between '" . $tanggal_awal . "' and '" . $tanggal_akhir . "' ) as total_jumlah_pembelian"),
-                )
-                ->groupBy('backup_produks.id_produk')
-                ->get();
-
+            $results = $baseQuery->where([['bp.id_kategori', '!=', 4], ['bp.id_kategori', '!=', 5]])->get();
             $penjualan = DB::table('penjualan_detail')
                 ->join('produk', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
                 ->where([['produk.id_kategori', '!=', 4], ['produk.id_kategori', '!=', 5]])
@@ -530,27 +429,44 @@ class LaporanController extends Controller
         return view('laporan.hasil_usaha', ['awal' => $tanggal_awal, 'akhir' => $tanggal_akhir, 'penjualan'  => $penjualan, 'hpp' => $totalValue, 'jasa' => $jasa]);
     }
 
-    public function shu($awal_tanggal, $akhir_tanggal)
-    {
+    public function shu($awal_tanggal, $akhir_tanggal) {
         $akhir_tanggal = Carbon::parse($akhir_tanggal)->endOfDay();
         $jasa = Jasa::whereBetween('created_at', [$awal_tanggal, $akhir_tanggal])->sum('nominal');
+        
+        $baseQuery = DB::table('backup_produks as bp')
+            ->join('produk as p', 'bp.id_produk', '=', 'p.id_produk')
+            ->leftJoin(DB::raw("(
+                SELECT id_produk, SUM(jumlah) as total_belanja 
+                FROM pembelian_detail 
+                WHERE created_at BETWEEN '$awal_tanggal' AND '$akhir_tanggal' 
+                GROUP BY id_produk
+            ) as pd"), 'bp.id_produk', '=', 'pd.id_produk')
+            ->leftJoin(DB::raw("(
+                SELECT id_produk, 
+                    FIRST_VALUE(stok_awal) OVER (PARTITION BY id_produk ORDER BY created_at ASC) as first_stok_awal
+                FROM backup_produks 
+                WHERE created_at >= '$awal_tanggal'
+            ) as bp_awal"), 'bp.id_produk', '=', 'bp_awal.id_produk')
+            ->leftJoin(DB::raw("(
+                SELECT id_produk, 
+                    FIRST_VALUE(stok_akhir) OVER (PARTITION BY id_produk ORDER BY created_at DESC) as last_stok_akhir
+                FROM backup_produks 
+                WHERE created_at <= '$akhir_tanggal'
+            ) as bp_akhir"), 'bp.id_produk', '=', 'bp_akhir.id_produk')
+            ->whereBetween('bp.created_at', [$awal_tanggal, $akhir_tanggal])
+            ->select(
+                'bp.id_produk',
+                'bp.nama_produk',
+                'bp.satuan',
+                'bp.harga_beli',
+                DB::raw('COALESCE(bp_awal.first_stok_awal, 0) as stok_awal'),
+                DB::raw('COALESCE(bp_akhir.last_stok_akhir, 0) as stok_akhir'),
+                DB::raw('COALESCE(pd.total_belanja, 0) as stok_belanja')
+            )
+            ->groupBy('bp.id_produk', 'bp.nama_produk', 'bp.satuan', 'bp.harga_beli', 'bp_awal.first_stok_awal', 'bp_akhir.last_stok_akhir', 'pd.total_belanja');
+        
         if (auth()->user()->level == 4) {
-            $results = DB::table('backup_produks as bp')
-                ->where('bp.id_kategori', 4)
-                ->join('produk as p', 'bp.id_produk', '=', 'p.id_produk')
-                ->whereBetween('bp.created_at', [$awal_tanggal, $akhir_tanggal])
-                ->select(
-                    'bp.id_produk',
-                    'bp.nama_produk',
-                    'bp.satuan',
-                    'bp.harga_beli',
-                    DB::raw("COALESCE((SELECT stok_awal FROM backup_produks WHERE id_produk = bp.id_produk AND created_at >= '$awal_tanggal' ORDER BY created_at ASC LIMIT 1), 0) as stok_awal"),
-                    DB::raw("COALESCE((SELECT stok_akhir FROM backup_produks WHERE id_produk = bp.id_produk AND created_at <= '$akhir_tanggal' ORDER BY created_at DESC LIMIT 1), 0) as stok_akhir"),
-                    DB::raw("COALESCE((SELECT SUM(jumlah) FROM pembelian_detail WHERE id_produk = bp.id_produk AND created_at BETWEEN '$awal_tanggal' AND '$akhir_tanggal'), 0) as stok_belanja")
-                )
-                ->groupBy('bp.id_produk', 'bp.nama_produk', 'bp.satuan', 'bp.harga_beli')
-                ->get();
-
+            $results = $baseQuery->where('bp.id_kategori', 4)->get();
             $penjualan = DB::table('penjualan_detail')
                 ->join('produk', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
                 ->where('produk.id_kategori', 4)
@@ -562,22 +478,7 @@ class LaporanController extends Controller
                 ->whereBetween('pengeluaran.created_at', [$awal_tanggal, $akhir_tanggal])
                 ->sum('pengeluaran.nominal');
         } elseif (auth()->user()->level == 5) {
-            $results = DB::table('backup_produks as bp')
-                ->where('bp.id_kategori', 5)
-                ->join('produk as p', 'bp.id_produk', '=', 'p.id_produk')
-                ->whereBetween('bp.created_at', [$awal_tanggal, $akhir_tanggal])
-                ->select(
-                    'bp.id_produk',
-                    'bp.nama_produk',
-                    'bp.satuan',
-                    'bp.harga_beli',
-                    DB::raw("COALESCE((SELECT stok_awal FROM backup_produks WHERE id_produk = bp.id_produk AND created_at >= '$awal_tanggal' ORDER BY created_at ASC LIMIT 1), 0) as stok_awal"),
-                    DB::raw("COALESCE((SELECT stok_akhir FROM backup_produks WHERE id_produk = bp.id_produk AND created_at <= '$akhir_tanggal' ORDER BY created_at DESC LIMIT 1), 0) as stok_akhir"),
-                    DB::raw("COALESCE((SELECT SUM(jumlah) FROM pembelian_detail WHERE id_produk = bp.id_produk AND created_at BETWEEN '$awal_tanggal' AND '$akhir_tanggal'), 0) as stok_belanja")
-                )
-                ->groupBy('bp.id_produk', 'bp.nama_produk', 'bp.satuan', 'bp.harga_beli')
-                ->get();
-
+            $results = $baseQuery->where('bp.id_kategori', 5)->get();
             $penjualan = DB::table('penjualan_detail')
                 ->join('produk', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
                 ->where('produk.id_kategori', 5)
@@ -585,44 +486,22 @@ class LaporanController extends Controller
                 ->sum('penjualan_detail.subtotal');
             $pengeluaran = DB::table('pengeluaran')
                 ->join('users', 'pengeluaran.id_user', '=', 'users.id')
-                ->where('users.level', 4)
+                ->where(function ($q) {
+                    $q->where('users.level', 5)
+                      ->orWhere('users.level', 8);
+                })
                 ->whereBetween('pengeluaran.created_at', [$awal_tanggal, $akhir_tanggal])
                 ->sum('pengeluaran.nominal');
         } elseif (auth()->user()->level == 1) {
-            $results = DB::table('backup_produks as bp')
-                ->join('produk as p', 'bp.id_produk', '=', 'p.id_produk')
-                ->whereBetween('bp.created_at', [$awal_tanggal, $akhir_tanggal])
-                ->select(
-                    'bp.id_produk',
-                    'bp.nama_produk',
-                    'bp.satuan',
-                    'bp.harga_beli',
-                    DB::raw("COALESCE((SELECT stok_awal FROM backup_produks WHERE id_produk = bp.id_produk AND created_at >= '$awal_tanggal' ORDER BY created_at ASC LIMIT 1), 0) as stok_awal"),
-                    DB::raw("COALESCE((SELECT stok_akhir FROM backup_produks WHERE id_produk = bp.id_produk AND created_at <= '$akhir_tanggal' ORDER BY created_at DESC LIMIT 1), 0) as stok_akhir"),
-                    DB::raw("COALESCE((SELECT SUM(jumlah) FROM pembelian_detail WHERE id_produk = bp.id_produk AND created_at BETWEEN '$awal_tanggal' AND '$akhir_tanggal'), 0) as stok_belanja")
-                )
-                ->groupBy('bp.id_produk', 'bp.nama_produk', 'bp.satuan', 'bp.harga_beli')
-                ->get();
-
-            $penjualan = DB::table('penjualan_detail')->whereBetween('created_at', [$awal_tanggal, $akhir_tanggal])->sum('subtotal');
-            $pengeluaran = DB::table('pengeluaran')->whereBetween('created_at', [$awal_tanggal, $akhir_tanggal])->sum('nominal');
+            $results = $baseQuery->get();
+            $penjualan = DB::table('penjualan_detail')
+                ->whereBetween('created_at', [$awal_tanggal, $akhir_tanggal])
+                ->sum('subtotal');
+            $pengeluaran = DB::table('pengeluaran')
+                ->whereBetween('created_at', [$awal_tanggal, $akhir_tanggal])
+                ->sum('nominal');
         } else {
-            $results = DB::table('backup_produks as bp')
-                ->where([['bp.id_kategori', '!=', 4], ['bp.id_kategori', '!=', 5]])
-                ->join('produk as p', 'bp.id_produk', '=', 'p.id_produk')
-                ->whereBetween('bp.created_at', [$awal_tanggal, $akhir_tanggal])
-                ->select(
-                    'bp.id_produk',
-                    'bp.nama_produk',
-                    'bp.satuan',
-                    'bp.harga_beli',
-                    DB::raw("COALESCE((SELECT stok_awal FROM backup_produks WHERE id_produk = bp.id_produk AND created_at >= '$awal_tanggal' ORDER BY created_at ASC LIMIT 1), 0) as stok_awal"),
-                    DB::raw("COALESCE((SELECT stok_akhir FROM backup_produks WHERE id_produk = bp.id_produk AND created_at <= '$akhir_tanggal' ORDER BY created_at DESC LIMIT 1), 0) as stok_akhir"),
-                    DB::raw("COALESCE((SELECT SUM(jumlah) FROM pembelian_detail WHERE id_produk = bp.id_produk AND created_at BETWEEN '$awal_tanggal' AND '$akhir_tanggal'), 0) as stok_belanja")
-                )
-                ->groupBy('bp.id_produk', 'bp.nama_produk', 'bp.satuan', 'bp.harga_beli')
-                ->get();
-
+            $results = $baseQuery->where([['bp.id_kategori', '!=', 4], ['bp.id_kategori', '!=', 5]])->get();
             $penjualan = DB::table('penjualan_detail')
                 ->join('produk', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
                 ->where([['produk.id_kategori', '!=', 4], ['produk.id_kategori', '!=', 5]])
@@ -630,8 +509,10 @@ class LaporanController extends Controller
                 ->sum('penjualan_detail.subtotal');
             $pengeluaran = DB::table('pengeluaran')
                 ->join('users', 'pengeluaran.id_user', '=', 'users.id')
-                ->where('users.level', 2)
-                ->orWhere('users.level', 6)
+                ->where(function ($q) {
+                    $q->where('users.level', 2)
+                      ->orWhere('users.level', 6);
+                })
                 ->whereBetween('pengeluaran.created_at', [$awal_tanggal, $akhir_tanggal])
                 ->sum('pengeluaran.nominal');
         }
@@ -642,12 +523,13 @@ class LaporanController extends Controller
             $totalValue += (($result->harga_beli * $result->stok_awal) + ($result->stok_belanja * $result->harga_beli)) - ($result->harga_beli * $result->stok_akhir);
         }
 
-        return view('laporan.shu', ['awal' => $awal_tanggal, 'akhir' => $akhir_tanggal, 'pengeluaran' => $pengeluaran, 'penjualan'  => $penjualan, 'hpp' => $totalValue, 'jasa' => $jasa]);
+        return view('laporan.shu', ['awal' => $awal_tanggal, 'akhir' => $akhir_tanggal, 'pengeluaran' => $pengeluaran,'penjualan'  => $penjualan, 'hpp' => $totalValue, 'jasa' => $jasa]);
     }
-
+    
     public function jurnal_penjualan($tanggal_aw, $tanggal_ak)
     {
         $tanggal_ak = Carbon::parse($tanggal_ak)->endOfDay();
+        $value_penjualan = 0;
         if (auth()->user()->level == 4) {
             $detail_penjualan = DB::table('penjualan_detail')
                 ->join('produk', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
@@ -665,6 +547,10 @@ class LaporanController extends Controller
                 ->where('produk.id_kategori', 4)
                 ->whereBetween('penjualan_detail.created_at', [$tanggal_aw, $tanggal_ak])
                 ->sum('penjualan_detail.subtotal');
+            foreach ($detail_penjualan as $detail) 
+            {
+                $value_penjualan += $detail->total_harga;
+            }
         } elseif (auth()->user()->level == 5) {
             $detail_penjualan = DB::table('penjualan_detail')
                 ->join('produk', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
@@ -682,6 +568,10 @@ class LaporanController extends Controller
                 ->where('produk.id_kategori', 5)
                 ->whereBetween('penjualan_detail.created_at', [$tanggal_aw, $tanggal_ak])
                 ->sum('penjualan_detail.subtotal');
+            foreach ($detail_penjualan as $detail) 
+            {
+                $value_penjualan += $detail->total_harga;
+            }
         } elseif (auth()->user()->level == 1) {
             $detail_penjualan = DB::table('penjualan_detail')
                 ->join('produk', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
@@ -696,29 +586,43 @@ class LaporanController extends Controller
             $penjualan = DB::table('penjualan_detail')
                 ->whereBetween('created_at', [$tanggal_aw, $tanggal_ak])
                 ->sum('subtotal');
+            foreach ($detail_penjualan as $detail) 
+            {
+                $value_penjualan += $detail->total_harga;
+            }
         } else {
-            $detail_penjualan = DB::table('penjualan_detail')
+           $detail_penjualan = DB::table('penjualan_detail')
+                ->join('penjualan', 'penjualan_detail.id_penjualan', '=', 'penjualan.id_penjualan')
+                ->join('users', 'penjualan.id_user', '=', 'users.id')
                 ->join('produk', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
-                ->where([['produk.id_kategori', '!=', 4], ['produk.id_kategori', '!=', 5]])
+                ->where(function ($q) {
+                    $q->where('users.level', 2)
+                      ->orWhere('users.level', 6);
+                })
                 ->whereBetween('penjualan_detail.created_at', [$tanggal_aw, $tanggal_ak])
                 ->select(
-                    'produk.nama_produk',
-                    DB::raw('sum(penjualan_detail.subtotal) as total_harga')
+                    'penjualan_detail.*',
+                    'penjualan.*',
+                    'produk.nama_produk'
                 )
-                ->groupBy('produk.id_produk', 'produk.nama_produk')
+                ->orderBy('penjualan_detail.created_at', 'asc')
                 ->get();
+            
+            $penjualan = DB::table('penjualan')
+                ->join('users', 'penjualan.id_user', '=', 'users.id')
+                ->where(function ($q) {
+                    $q->where('users.level', 2)
+                      ->orWhere('users.level', 6);
+                })
+                ->whereBetween('penjualan.created_at', [$tanggal_aw, $tanggal_ak])
+                ->sum('penjualan.bayar');
+            foreach ($detail_penjualan as $detail) 
+            {
+               $value_penjualan += $detail->harga_jual * $detail->jumlah;
+            }
+            
+            $penjualan = $value_penjualan;
 
-            $penjualan = DB::table('penjualan_detail')
-                ->join('produk', 'penjualan_detail.id_produk', '=', 'produk.id_produk')
-                ->where([['produk.id_kategori', '!=', 4], ['produk.id_kategori', '!=', 5]])
-                ->whereBetween('penjualan_detail.created_at', [$tanggal_aw, $tanggal_ak])
-                ->sum('penjualan_detail.subtotal');
-        }
-
-        $value_penjualan = 0;
-
-        foreach ($detail_penjualan as $detail) {
-            $value_penjualan += $detail->total_harga;
         }
 
         return view('laporan.jurnal_penjualan', ['awal' => $tanggal_aw, 'akhir' => $tanggal_ak, 'penjualan'  => $penjualan, 'detail_penjualan' => $detail_penjualan, 'value_penjualan' => $value_penjualan]);
@@ -747,7 +651,7 @@ class LaporanController extends Controller
         } elseif (auth()->user()->level == 5) {
             $detail_pembelian = DB::table('pembelian_detail')
                 ->join('produk', 'pembelian_detail.id_produk', '=', 'produk.id_produk')
-                ->where('produk.id_kategori', 5)
+                ->where('produk.id_kategori', 4)
                 ->whereBetween('pembelian_detail.created_at', [$tanggal_aw, $tanggal_ak])
                 ->select(
                     'produk.nama_produk',
@@ -792,10 +696,11 @@ class LaporanController extends Controller
                 ->whereBetween('pembelian_detail.created_at', [$tanggal_aw, $tanggal_ak])
                 ->sum('pembelian_detail.subtotal');
         }
-
+        
         $value_pembelian = 0;
 
-        foreach ($detail_pembelian as $detail) {
+        foreach ($detail_pembelian as $detail) 
+        {
             $value_pembelian += $detail->total_harga;
         }
 

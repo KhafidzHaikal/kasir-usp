@@ -53,15 +53,6 @@ class DBProduk extends Command
         });
 
         // Update produk table with calculated stok values
-        $results->each(function ($result) {
-            $stok_akhir = ($result->stok_lama ?? 0) + $result->total_jumlah_pembelian - $result->total_jumlah_penjualan;
-            DB::table('produk')
-                ->where('id_produk', $result->id_produk)
-                ->update([
-                    'stok' => $stok_akhir,
-                    'stok_lama' => $stok_akhir
-                ]);
-        });
 
         $hasil = DB::table('produk')
             ->select(
@@ -95,6 +86,16 @@ class DBProduk extends Command
             $backup->created_at = Carbon::now()->startOfMonth();
             $backup->updated_at = Carbon::now()->startOfMonth();
             $backup->save();
+        });
+
+        $hasil->each(function ($result) {
+            $stok_akhir = ($result->stok_lama ?? 0) + $result->total_jumlah_pembelian - $result->total_jumlah_penjualan;
+            DB::table('produk')
+                ->where('id_produk', $result->id_produk)
+                ->update([
+                    'stok' => $stok_akhir,
+                    'stok_lama' => $stok_akhir
+                ]);
         });
 
         $this->info("Backup created for both end-of-last-month and start-of-this-month for {$currentMonth}");

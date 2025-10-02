@@ -177,6 +177,8 @@
                 </div>
 
                 <div class="box-footer">
+                    <button type="button" class="btn btn-danger btn-sm btn-flat pull-left btn-batal"><i
+                            class="fa fa-times"></i> Batal Transaksi</button>
                     <button type="submit" class="btn btn-primary btn-sm btn-flat pull-right btn-simpan"><i
                             class="fa fa-floppy-o"></i> Simpan Transaksi</button>
                 </div>
@@ -224,7 +226,13 @@
                         }
                     },
                     error: function(xhr, status, error) {
-                        alert('Pruduk Tidak Ditemukan');
+                        let errorMessage = 'Produk Tidak Ditemukan';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        } else if (xhr.responseText) {
+                            errorMessage = xhr.responseText;
+                        }
+                        alert(errorMessage);
                         $('#kode_produk').val("");
                         $('#kode_produk').focus();
                         return;
@@ -320,7 +328,13 @@
                             });
                         })
                         .fail(errors => {
-                            alert('Tidak dapat menyimpan data');
+                            let errorMessage = 'Tidak dapat menyimpan data';
+                            if (errors.responseJSON && errors.responseJSON.message) {
+                                errorMessage = errors.responseJSON.message;
+                            } else if (errors.responseText) {
+                                errorMessage = errors.responseText;
+                            }
+                            alert(errorMessage);
                             return;
                         });
                 });
@@ -347,6 +361,31 @@
             $('.btn-simpan').on('click', function() {
                 $('.form-penjualan').submit();
             });
+            
+            $('.btn-batal').on('click', function() {
+                if (confirm('Yakin ingin membatalkan transaksi ini?')) {
+                    $.ajax({
+                        url: '{{ route('transaksi.batal', $id_penjualan) }}',
+                        type: 'DELETE',
+                        data: {
+                            '_token': $('[name=csrf-token]').attr('content')
+                        },
+                        success: function(response) {
+                            alert('Transaksi berhasil dibatalkan');
+                            window.location.href = '{{ route('dashboard') }}';
+                        },
+                        error: function(xhr, status, error) {
+                            let errorMessage = 'Tidak dapat membatalkan transaksi';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            } else if (xhr.responseText) {
+                                errorMessage = xhr.responseText;
+                            }
+                            alert(errorMessage);
+                        }
+                    });
+                }
+            });
         });
 
         function tampilProduk() {
@@ -371,7 +410,13 @@
                     table.ajax.reload(() => loadForm($('#diskon').val()));
                 })
                 .fail(errors => {
-                    alert('Tidak dapat menyimpan data');
+                    let errorMessage = 'Tidak dapat menyimpan data';
+                    if (errors.responseJSON && errors.responseJSON.message) {
+                        errorMessage = errors.responseJSON.message;
+                    } else if (errors.responseText) {
+                        errorMessage = errors.responseText;
+                    }
+                    alert(errorMessage);
                     return;
                 });
         }

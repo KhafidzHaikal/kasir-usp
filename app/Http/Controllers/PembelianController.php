@@ -23,23 +23,35 @@ class PembelianController extends Controller
     {
         // if (auth()->user()->level == 4) {
         //     $pembelian = Pembelian::join('users', 'id_user', '=', 'users.id')
-        //         ->where('users.level', 4)
+        //         ->where([['users.level', 4], ['total_item', '!=', 0]])
+        //         ->select('pembelian.*')
         //         ->orderBy('id_pembelian', 'desc')
         //         ->get();
         // } elseif (auth()->user()->level == 5) {
         //     $pembelian = Pembelian::join('users', 'id_user', '=', 'users.id')
-        //         ->where('users.level', 5)
+        //         ->where([['users.level', 5], ['total_item', '!=', 0]])
+        //         ->select('pembelian.*')
         //         ->orderBy('id_pembelian', 'desc')
         //         ->get();
-        // } elseif (auth()->user()->level == 2) {
+        // } elseif (auth()->user()->level == 8) {
         //     $pembelian = Pembelian::join('users', 'id_user', '=', 'users.id')
-        //         ->where('users.level', 2)
+        //         ->where('users.level', 8)
+        //         ->orderBy('id_pembelian', 'desc')
+        //         ->get();
+        // } elseif (auth()->user()->level == 1) {
+        //     $pembelian = Pembelian::where('total_item', '!=', 0)
+        //         ->select('pembelian.*')
         //         ->orderBy('id_pembelian', 'desc')
         //         ->get();
         // } else {
-        //     $pembelian = Pembelian::orderBy('id_pembelian', 'desc')->get();
+        //     $pembelian = Pembelian::join('users', 'id_user', '=', 'users.id')
+        //         ->where([['users.level', 2], ['total_item', '!=', 0]])
+        //         ->orWhere([['users.level', 3], ['total_item', '!=', 0]])
+        //         ->select('pembelian.*')
+        //         ->orderBy('id_pembelian', 'desc')
+        //         ->get();
         // }
-
+        
         if (auth()->user()->level == 4) {
             $pembelian = Pembelian::join('pembelian_detail', 'pembelian.id_pembelian', '=', 'pembelian_detail.id_pembelian')
                 ->join('produk', 'pembelian_detail.id_produk', '=', 'produk.id_produk')
@@ -96,8 +108,8 @@ class PembelianController extends Controller
             ->addColumn('aksi', function ($pembelian) {
                 return '
                 <div class="btn-group">
-                    <button onclick="showDetail(`' . route('pembelian.show', $pembelian->id_pembelian) . '`)" class="btn btn-xs btn-info btn-flat"><i class="fa fa-eye"></i></button>
-                    <button onclick="deleteData(`' . route('pembelian.destroy', $pembelian->id_pembelian) . '`)" class="btn btn-xs btn-danger btn-flat"><i class="fa fa-trash"></i></button>
+                    <button onclick="showDetail(`' . route('pembelian.show', $pembelian->id_pembelian) . '`)" class="btn btn-info btn-flat"><i class="fa fa-eye"></i></button>
+                    <button onclick="deleteData(`' . route('pembelian.destroy', $pembelian->id_pembelian) . '`)" class="btn btn-danger btn-flat"><i class="fa fa-trash"></i></button>
                 </div>
                 ';
             })
@@ -130,14 +142,17 @@ class PembelianController extends Controller
         $pembelian->diskon = $request->diskon;
         $pembelian->bayar = $request->bayar;
         $pembelian->created_at = $request->created_at;
+        $pembelian->updated_at = $request->created_at;
         $pembelian->update();
 
         $detail = PembelianDetail::where('id_pembelian', $pembelian->id_pembelian)->get();
         foreach ($detail as $item) {
             $item->created_at = $request->created_at;
+            $item->updated_at = $request->created_at;
             $item->save();
             $produk = Produk::find($item->id_produk);
             $produk->stok += $item->jumlah;
+            $produk->updated_at = $request->created_at;
             $produk->update();
         }
 
@@ -243,16 +258,14 @@ class PembelianController extends Controller
                 ->get();
         }
 
-
         $jumlah = 0;
         foreach ($pembelian as $item) {
             $jumlah += $item->subtotal;
         }
-
+        
         return view('pembelian.pdf', [
             'awal' => $awal, 'akhir' => $akhir, 'pembelian' => $pembelian, 'jumlah' => $jumlah
-        ]);
-        // $pdf  = PDF::loadView('pembelian.pdf', compact('awal', 'akhir', 'pembelian', 'jumlah'));
-        // return $pdf->inline('Laporan-Pembelian-' . date('Y-m-d-his') . '.pdf');
+            ]);
+
     }
 }

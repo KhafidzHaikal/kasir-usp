@@ -21,18 +21,24 @@ class KasirController extends Controller
     public function data()
     {
         if (auth()->user()->level == 1) {
-            $penjualan = Penjualan::with('member')->orderBy('id_penjualan', 'desc')->get();
+            $penjualan = Penjualan::with('member')
+                ->where('total_item', '!=', 0)
+                ->select('penjualan.*')
+                ->orderBy('id_penjualan', 'desc')
+                ->get();
         } elseif (auth()->user()->level == 2) {
             $penjualan = Penjualan::with('member')
                 ->join('users', 'penjualan.id_user', '=', 'users.id')
-                ->where('users.level', 2)
-                ->orWhere('users.level', 6)
+                ->where([['users.level', 2], ['total_item', '!=', 0]])
+                ->orWhere([['users.level', 6], ['total_item', '!=', 0]])
+                ->select('penjualan.*')
                 ->orderBy('penjualan.id_penjualan', 'desc')
                 ->get();
         } elseif (auth()->user()->level == 4) {
             $penjualan = Penjualan::with('member')
                 ->join('users', 'penjualan.id_user', '=', 'users.id')
-                ->where('users.level', 4)
+                ->where([['users.level', 4], ['total_item', '!=', 0]])
+                ->select('penjualan.*')
                 ->orderBy('penjualan.id_penjualan', 'desc')
                 ->get();
         } elseif (auth()->user()->level == 5) {
@@ -50,7 +56,8 @@ class KasirController extends Controller
                 ->get();
         } else {
             $penjualan = Penjualan::with('member')
-                ->where('id_user', '=', Auth::id())
+                ->where([['id_user', auth()->user()->id], ['total_item', '!=', 0]])
+                ->select('penjualan.*')
                 ->orderBy('id_penjualan', 'desc')
                 ->get();
         }
@@ -129,70 +136,40 @@ class KasirController extends Controller
     {
         $akhir = Carbon::parse($akhir)->endOfDay();
         if (auth()->user()->level == 1) {
-            // $penjualan = PenjualanDetail::join('penjualan', 'penjualan_detail.id_penjualan', '=', 'penjualan.id_penjualan')
-            //     ->select('penjualan_detail.*', 'penjualan.*')
-            //     ->whereBetween('penjualan_detail.created_at', [$awal, $akhir])
-            //     ->get();
-            $penjualan = Penjualan::whereBetween('created_at', [$awal, $akhir])->get();
+            $penjualan = Penjualan::whereBetween('penjualan.created_at', [$awal, $akhir])
+                ->select('penjualan.*')
+                ->get();
         } elseif (auth()->user()->level == 2) {
-            // $penjualan = PenjualanDetail::join('penjualan', 'penjualan_detail.id_penjualan', '=', 'penjualan.id_penjualan')
-            //     ->join('users', 'penjualan.id_user', '=', 'users.id')
-            //     ->where('users.level', 2)
-            //     ->orWhere('users.level', 6)
-            //     ->select('penjualan_detail.*', 'penjualan.*')
-            //     ->whereBetween('penjualan_detail.created_at', [$awal, $akhir])
-            //     ->get();
             $penjualan = Penjualan::join('users', 'penjualan.id_user', '=', 'users.id')
                 ->where('users.level', 2)
                 ->orWhere('users.level', 6)
-                ->whereBetween('created_at', [$awal, $akhir])
+                ->whereBetween('penjualan.created_at', [$awal, $akhir])
+                ->select('penjualan.*')
                 ->get();
         } elseif (auth()->user()->level == 4) {
-            // $penjualan = PenjualanDetail::join('penjualan', 'penjualan_detail.id_penjualan', '=', 'penjualan.id_penjualan')
-            //     ->join('users', 'penjualan.id_user', '=', 'users.id')
-            //     ->where('users.level', 4)
-            //     ->select('penjualan_detail.*', 'penjualan.*')
-            //     ->whereBetween('penjualan_detail.created_at', [$awal, $akhir])
-            //     ->get();
             $penjualan = Penjualan::join('users', 'penjualan.id_user', '=', 'users.id')
                 ->where('users.level', 4)
-                ->whereBetween('created_at', [$awal, $akhir])
+                ->whereBetween('penjualan.created_at', [$awal, $akhir])
+                ->select('penjualan.*')
                 ->get();
         } elseif (auth()->user()->level == 5) {
-            // $penjualan = PenjualanDetail::join('penjualan', 'penjualan_detail.id_penjualan', '=', 'penjualan.id_penjualan')
-            //     ->join('users', 'penjualan.id_user', '=', 'users.id')
-            //     ->where('users.level', 5)
-            //     ->select('penjualan_detail.*', 'penjualan.*')
-            //     ->whereBetween('penjualan_detail.created_at', [$awal, $akhir])
-            //     ->get();
             $penjualan = Penjualan::join('users', 'penjualan.id_user', '=', 'users.id')
                 ->where('users.level', 5)
                 ->orWhere('users.level', 8)
                 ->whereBetween('created_at', [$awal, $akhir])
                 ->get();
         } elseif (auth()->user()->level == 8) {
-            // $penjualan = PenjualanDetail::join('penjualan', 'penjualan_detail.id_penjualan', '=', 'penjualan.id_penjualan')
-            //     ->join('users', 'penjualan.id_user', '=', 'users.id')
-            //     ->where('users.level', 5)
-            //     ->select('penjualan_detail.*', 'penjualan.*')
-            //     ->whereBetween('penjualan_detail.created_at', [$awal, $akhir])
-            //     ->get();
             $penjualan = Penjualan::join('users', 'penjualan.id_user', '=', 'users.id')
                 ->where('users.level', 8)
-                ->whereBetween('created_at', [$awal, $akhir])
+                ->whereBetween('penjualan.created_at', [$awal, $akhir])
+                ->select('penjualan.*')
                 ->get();
         } else {
-            // $penjualan = PenjualanDetail::join('penjualan', 'penjualan_detail.id_penjualan', '=', 'penjualan.id_penjualan')
-            //     ->where('penjualan.id_user', Auth::id())
-            //     ->select('penjualan_detail.*', 'penjualan.*')
-            //     ->whereBetween('penjualan_detail.created_at', [$awal, $akhir])
-            //     ->get();
             $penjualan = Penjualan::where('penjualan.id_user', Auth::id())
-                ->whereBetween('created_at', [$awal, $akhir])
+                ->whereBetween('penjualan.created_at', [$awal, $akhir])
+                ->select('penjualan.*')
                 ->get();
         }
-
-        // dd($penjualan);
 
         $no = 1;
         $total = 0;
@@ -208,7 +185,8 @@ class KasirController extends Controller
             }
         }
 
-        $pdf  = PDF::loadView('kasir.laporan', compact('awal', 'akhir', 'penjualan', 'total', 'no', 'total_kredit', 'total_tunai'));
-        return $pdf->inline('Laporan-Penjualan-' . date('Y-m-d-his') . '.pdf');
+        return view('kasir.laporan', [
+            'awal' => $awal, 'akhir' => $akhir, 'penjualan' => $penjualan, 'total' => $total, 'total_kredit' => $total_kredit, 'total_tunai' => $total_tunai, 'no' => $no
+            ]);
     }
 }
